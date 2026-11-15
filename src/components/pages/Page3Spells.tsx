@@ -1,8 +1,9 @@
-import { Dices, Plus, Trash2, Wand2 } from 'lucide-react';
+import { Dices, Plus, Swords, Trash2, Wand2 } from 'lucide-react';
 import type { SheetCtx } from '../sheetContext';
 import type { AbilityKey, SpellLevelBlock } from '../../types/character';
 import { ABILITIES } from '../../constants/dnd55Rules';
 import { useI18n } from '../../i18n/I18nContext';
+import { extractDiceNotation, isSaveDcText } from '../../utils/dice';
 import { createBlankSpell } from '../../utils/storage';
 import { DerivedValue } from '../shared/DerivedValue';
 import { useDiceRoller } from '../shared/DiceRoller';
@@ -41,8 +42,9 @@ function FlagChip({
 }
 
 function SpellLevelCard({ ctx, block, index }: { ctx: SheetCtx; block: SpellLevelBlock; index: number }) {
-  const { mutate, readOnly } = ctx;
+  const { stats, mutate, readOnly } = ctx;
   const { t } = useI18n();
+  const { promptRoll, promptDamage } = useDiceRoller();
   const isCantrip = block.level === 0;
   const lv = (fn: (b: SpellLevelBlock) => void) => mutate((d) => fn(d.spellcasting.levels[index]));
   const addLabel = isCantrip ? t.page3.addCantrip : t.page3.addSpell;
@@ -111,77 +113,147 @@ function SpellLevelCard({ ctx, block, index }: { ctx: SheetCtx; block: SpellLeve
         </p>
       ) : (
         <div className="flex flex-col gap-1.5">
-          {block.spells.map((spell, si) => (
-            <div key={spell.id} className="rounded-md border border-ink-700/60 bg-ink-850/50 p-1.5">
-              <div className="flex items-center gap-1.5">
-                {!isCantrip && (
-                  <Dot
-                    tone="arcane"
-                    checked={spell.prepared}
+          {block.spells.map((spell, si) => {
+            const isDc =
+              spell.rollMode === 'dc' ||
+              isSaveDcText(spell.damage ?? '') ||
+              isSaveDcText(spell.notes ?? '');
+            const damageSource = spell.damage?.trim() || spell.notes?.trim() || '';
+            const hasDmg = Boolean(extractDiceNotation(damageSource));
+            const spellLabel = spell.name || (isCantrip ? t.page3.cantripPh : t.page3.spellPh);
+
+            return (
+              <div key={spell.id} className="rounded-md border border-ink-700/60 bg-ink-850/50 p-1.5">
+                <div className="flex items-center gap-1.5">
+                  {!isCantrip && (
+                    <Dot
+                      tone="arcane"
+                      checked={spell.prepared}
+                      disabled={readOnly}
+                      title={t.page3.prepared}
+                      onChange={(v) => lv((b) => void (b.spells[si].prepared = v))}
+                    />
+                  )}
+                  <TextInput
+                    value={spell.name}
                     disabled={readOnly}
-                    title={t.page3.prepared}
-                    onChange={(v) => lv((b) => void (b.spells[si].prepared = v))}
+                    placeholder={isCantrip ? t.page3.cantripPh : t.page3.spellPh}
+                    className="font-medium"
+                    onChange={(v) => lv((b) => void (b.spells[si].name = v))}
                   />
-                )}
-                <TextInput
-                  value={spell.name}
-                  disabled={readOnly}
-                  placeholder={isCantrip ? t.page3.cantripPh : t.page3.spellPh}
-                  className="font-medium"
-                  onChange={(v) => lv((b) => void (b.spells[si].name = v))}
-                />
-                <FlagChip
-                  label="C"
-                  title={t.page3.concentration}
-                  active={spell.concentration}
-                  disabled={readOnly}
-                  onClick={() => lv((b) => void (b.spells[si].concentration = !b.spells[si].concentration))}
-                />
-                <FlagChip
-                  label="R"
-                  title={t.page3.ritual}
-                  active={spell.ritual}
-                  disabled={readOnly}
-                  onClick={() => lv((b) => void (b.spells[si].ritual = !b.spells[si].ritual))}
-                />
-                <button
-                  type="button"
-                  className="btn-icon hover:text-blood-400!"
-                  disabled={readOnly}
-                  aria-label={t.page3.removeSpell}
-                  onClick={() => lv((b) => void b.spells.splice(si, 1))}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                  <button
+                    type="button"
+                    disabled={readOnly}
+                    title={isDc ? t.page3.modeDcTitle : t.page3.modeAttackTitle}
+                    aria-pressed={isDc}
+                    onClick={() =>
+                      lv(
+                        (b) =>
+                          void (b.spells[si].rollMode = b.spells[si].rollMode === 'dc' ? 'attack' : 'dc'),
+                      )
+                    }
+                    className={cx(
+                      'h-6 shrink-0 cursor-pointer rounded border px-1.5 text-[10px] font-bold transition-colors disabled:cursor-not-allowed',
+                      isDc
+                        ? 'border-arcane-500 bg-arcane-500/20 text-arcane-400'
+                        : 'border-gold-500/50 bg-gold-500/15 text-gold-300',
+                    )}
+                  >
+                    {isDc ? t.page3.modeDc : t.page3.modeAttack}
+                  </button>
+                  <FlagChip
+                    label="C"
+                    title={t.page3.concentration}
+                    active={spell.concentration}
+                    disabled={readOnly}
+                    onClick={() => lv((b) => void (b.spells[si].concentration = !b.spells[si].concentration))}
+                  />
+                  <FlagChip
+                    label="R"
+                    title={t.page3.ritual}
+                    active={spell.ritual}
+                    disabled={readOnly}
+                    onClick={() => lv((b) => void (b.spells[si].ritual = !b.spells[si].ritual))}
+                  />
+                  <button
+                    type="button"
+                    className="btn-icon text-gold-400! hover:text-gold-300!"
+                    title={t.roll.rollTooltip(spellLabel)}
+                    aria-label={t.roll.rollTooltip(spellLabel)}
+                    onClick={() =>
+                      promptRoll({
+                        label: spellLabel,
+                        bonus: isDc ? 0 : stats.spellAttackBonus,
+                        damageRaw: damageSource,
+                        isSaveDc: isDc,
+                        dcValue: isDc ? stats.spellSaveDc : undefined,
+                      })
+                    }
+                  >
+                    <Dices className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-icon text-gold-300! hover:text-gold-400!"
+                    disabled={!hasDmg}
+                    title={t.roll.rollTooltip(`${spellLabel} — ${t.table.damage}`)}
+                    aria-label={t.roll.rollTooltip(`${spellLabel} — ${t.table.damage}`)}
+                    onClick={() =>
+                      promptDamage({
+                        label: `${spellLabel} — ${t.table.damage}`,
+                        damageRaw: damageSource,
+                      })
+                    }
+                  >
+                    <Swords className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-icon hover:text-blood-400!"
+                    disabled={readOnly}
+                    aria-label={t.page3.removeSpell}
+                    onClick={() => lv((b) => void b.spells.splice(si, 1))}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <div className="mt-1 grid grid-cols-2 gap-1.5 sm:grid-cols-[1fr_1fr_1fr_1.4fr]">
+                  <TextInput
+                    bare
+                    value={spell.castingTime}
+                    disabled={readOnly}
+                    placeholder={t.page3.castingTimePh}
+                    className="text-xs!"
+                    onChange={(v) => lv((b) => void (b.spells[si].castingTime = v))}
+                  />
+                  <TextInput
+                    bare
+                    value={spell.range}
+                    disabled={readOnly}
+                    placeholder={t.page3.rangePh}
+                    className="text-xs!"
+                    onChange={(v) => lv((b) => void (b.spells[si].range = v))}
+                  />
+                  <TextInput
+                    bare
+                    value={spell.damage ?? ''}
+                    disabled={readOnly}
+                    placeholder={t.page3.damagePh}
+                    className="text-xs! text-gold-300!"
+                    onChange={(v) => lv((b) => void (b.spells[si].damage = v))}
+                  />
+                  <TextInput
+                    bare
+                    value={spell.notes ?? ''}
+                    disabled={readOnly}
+                    placeholder={t.page3.notesPh}
+                    className="text-xs! text-ink-300!"
+                    onChange={(v) => lv((b) => void (b.spells[si].notes = v))}
+                  />
+                </div>
               </div>
-              <div className="mt-1 grid grid-cols-[1fr_1fr_1.6fr] gap-1.5">
-                <TextInput
-                  bare
-                  value={spell.castingTime}
-                  disabled={readOnly}
-                  placeholder={t.page3.castingTimePh}
-                  className="text-xs!"
-                  onChange={(v) => lv((b) => void (b.spells[si].castingTime = v))}
-                />
-                <TextInput
-                  bare
-                  value={spell.range}
-                  disabled={readOnly}
-                  placeholder={t.page3.rangePh}
-                  className="text-xs!"
-                  onChange={(v) => lv((b) => void (b.spells[si].range = v))}
-                />
-                <TextInput
-                  bare
-                  value={spell.notes ?? ''}
-                  disabled={readOnly}
-                  placeholder={t.page3.notesPh}
-                  className="text-xs! text-ink-300!"
-                  onChange={(v) => lv((b) => void (b.spells[si].notes = v))}
-                />
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </Panel>
@@ -227,7 +299,22 @@ export function Page3Spells({ ctx }: { ctx: SheetCtx }) {
           </select>
         </Field>
         <div className="flex flex-col items-center gap-1 rounded-lg border border-ink-700 bg-ink-850/80 py-1.5">
-          <span className="field-label">{t.page3.spellSaveDc}</span>
+          <button
+            type="button"
+            onClick={() =>
+              promptRoll({
+                label: `${t.page3.spellSaveDc} (${stats.spellSaveDc})`,
+                bonus: 0,
+                isSaveDc: true,
+                dcValue: stats.spellSaveDc,
+              })
+            }
+            title={t.roll.rollTooltip(t.page3.spellSaveDc)}
+            className="field-label inline-flex cursor-pointer items-center gap-1 transition-colors hover:text-gold-300"
+          >
+            <span>{t.page3.spellSaveDc}</span>
+            <Dices className="h-3 w-3 text-gold-400/80" />
+          </button>
           <DerivedValue
             auto={auto}
             readOnly={readOnly}

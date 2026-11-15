@@ -1,8 +1,8 @@
 // Compact representation shared in the Owlbear Rodeo room metadata.
 // Short keys keep each character around ~1 kB so many fit in the 16 kB room limit.
 
-/** [name, level, flags, castingTime, range] — flags: 1 = prepared, 2 = concentration, 4 = ritual */
-export type SummarySpell = [string, number, number, string, string];
+/** [name, level, flags, castingTime, range, damage?] — flags: 1 = prepared, 2 = concentration, 4 = ritual, 8 = save DC */
+export type SummarySpell = [string, number, number, string, string, string?];
 
 /** [name, attack bonus, damage & type] */
 export type SummaryAttack = [string, string, string];

@@ -1,10 +1,10 @@
-import { Dices, Heart, Minus, Plus, Shield, Sparkles, Trash2, Wind, Zap } from 'lucide-react';
+import { Dices, Heart, Minus, Plus, Shield, Sparkles, Swords, Trash2, Wind, Zap } from 'lucide-react';
 import type { SheetCtx } from '../sheetContext';
 import type { Currency } from '../../types/character';
 import { ABILITIES, CONDITIONS, MAX_EXHAUSTION } from '../../constants/dnd55Rules';
 import { useI18n } from '../../i18n/I18nContext';
 import { clamp, formatModifier } from '../../utils/calculations';
-import { parseBonusString } from '../../utils/dice';
+import { extractDiceNotation, extractHitDieType, isSaveDcText, parseBonusString } from '../../utils/dice';
 import { createBlankAttack } from '../../utils/storage';
 import { AbilityBox } from '../shared/AbilityBox';
 import { DerivedValue } from '../shared/DerivedValue';
@@ -24,7 +24,7 @@ const COINS: { key: keyof Currency; color: string }[] = [
 export function Page1Core({ ctx }: { ctx: SheetCtx }) {
   const { sheet, stats, mutate, readOnly } = ctx;
   const { t } = useI18n();
-  const { promptRoll } = useDiceRoller();
+  const { promptRoll, promptHitDice, promptDamage } = useDiceRoller();
   const auto = sheet.autoCalculate;
   const c = sheet.combat;
   const hpPct = c.hpMax > 0 ? clamp((c.hpCurrent / c.hpMax) * 100, 0, 100) : 0;
@@ -252,7 +252,21 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
 
           <div className="mt-3 grid grid-cols-2 gap-3 border-t border-ink-700/60 pt-3">
             <div className="flex flex-col gap-2">
-              <span className="field-label">{t.page1.hitDice}</span>
+              <button
+                type="button"
+                onClick={() =>
+                  promptHitDice({
+                    label: t.page1.hitDice,
+                    dieType: extractHitDieType(c.hitDiceTotal, c.hitDiceCurrent),
+                    conMod: stats.abilityModifiers.constitution,
+                  })
+                }
+                title={t.roll.rollTooltip(t.page1.hitDice)}
+                className="field-label inline-flex cursor-pointer items-center gap-1 self-start transition-colors hover:text-gold-300"
+              >
+                <span>{t.page1.hitDice}</span>
+                <Dices className="h-3 w-3 text-gold-400/80" />
+              </button>
               <div className="grid grid-cols-2 gap-1.5">
                 <Field label={t.page1.hdTotal} htmlFor="hd-total">
                   <TextInput
@@ -274,7 +288,15 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              <span className="field-label">{t.page1.deathSaves}</span>
+              <button
+                type="button"
+                onClick={() => promptRoll({ label: t.page1.deathSaves, bonus: 0 })}
+                title={t.roll.rollTooltip(t.page1.deathSaves)}
+                className="field-label inline-flex cursor-pointer items-center gap-1 self-start transition-colors hover:text-gold-300"
+              >
+                <span>{t.page1.deathSaves}</span>
+                <Dices className="h-3 w-3 text-gold-400/80" />
+              </button>
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[11px] text-life-400">{t.page1.successes}</span>
                 <div className="flex gap-1">
@@ -379,70 +401,92 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
                 <span className="field-label">{t.page1.atkName}</span>
                 <span className="field-label">{t.page1.atkBonus}</span>
                 <span className="field-label">{t.page1.atkDamage}</span>
-                <span className="w-[60px]" />
+                <span className="w-[92px]" />
               </div>
-              {sheet.attacks.map((atk, i) => (
-                <div key={atk.id} className="rounded-md bg-ink-850/60 p-1">
-                  <div className="grid grid-cols-[1.4fr_0.6fr_1.3fr_auto] items-center gap-1.5">
-                    <TextInput
-                      value={atk.name}
-                      disabled={readOnly}
-                      placeholder={t.page1.atkNamePh}
-                      onChange={(v) => mutate((d) => void (d.attacks[i].name = v))}
-                    />
-                    <TextInput
-                      value={atk.atkBonus}
-                      disabled={readOnly}
-                      placeholder={formatModifier(stats.proficiencyBonus + stats.abilityModifiers.strength)}
-                      className="text-center"
-                      onChange={(v) => mutate((d) => void (d.attacks[i].atkBonus = v))}
-                    />
-                    <TextInput
-                      value={atk.damageType}
-                      disabled={readOnly}
-                      placeholder={t.page1.atkDamagePh}
-                      onChange={(v) => mutate((d) => void (d.attacks[i].damageType = v))}
-                    />
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        className="btn-icon text-gold-400! hover:text-gold-300!"
-                        title={t.roll.rollTooltip(atk.name || t.page1.atkNamePh)}
-                        aria-label={t.roll.rollTooltip(atk.name || t.page1.atkNamePh)}
-                        onClick={() =>
-                          promptRoll({
-                            label: atk.name || t.page1.atkNamePh,
-                            bonus: parseBonusString(
-                              atk.atkBonus,
-                              stats.proficiencyBonus + stats.abilityModifiers.strength,
-                            ),
-                            damageRaw: atk.damageType,
-                          })
-                        }
-                      >
-                        <Dices className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-icon hover:text-blood-400!"
+              {sheet.attacks.map((atk, i) => {
+                const isDc = isSaveDcText(atk.atkBonus);
+                const hasDmg = Boolean(extractDiceNotation(atk.damageType));
+                return (
+                  <div key={atk.id} className="rounded-md bg-ink-850/60 p-1">
+                    <div className="grid grid-cols-[1.4fr_0.6fr_1.3fr_auto] items-center gap-1.5">
+                      <TextInput
+                        value={atk.name}
                         disabled={readOnly}
-                        aria-label={t.page1.removeAttack}
-                        onClick={() => mutate((d) => void d.attacks.splice(i, 1))}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                        placeholder={t.page1.atkNamePh}
+                        onChange={(v) => mutate((d) => void (d.attacks[i].name = v))}
+                      />
+                      <TextInput
+                        value={atk.atkBonus}
+                        disabled={readOnly}
+                        placeholder={formatModifier(stats.proficiencyBonus + stats.abilityModifiers.strength)}
+                        className="text-center"
+                        onChange={(v) => mutate((d) => void (d.attacks[i].atkBonus = v))}
+                      />
+                      <TextInput
+                        value={atk.damageType}
+                        disabled={readOnly}
+                        placeholder={t.page1.atkDamagePh}
+                        onChange={(v) => mutate((d) => void (d.attacks[i].damageType = v))}
+                      />
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          className="btn-icon text-gold-400! hover:text-gold-300!"
+                          title={t.roll.rollTooltip(atk.name || t.page1.atkNamePh)}
+                          aria-label={t.roll.rollTooltip(atk.name || t.page1.atkNamePh)}
+                          onClick={() =>
+                            promptRoll({
+                              label: atk.name || t.page1.atkNamePh,
+                              bonus: isDc
+                                ? 0
+                                : parseBonusString(
+                                    atk.atkBonus,
+                                    stats.proficiencyBonus + stats.abilityModifiers.strength,
+                                  ),
+                              damageRaw: atk.damageType,
+                              isSaveDc: isDc,
+                            })
+                          }
+                        >
+                          <Dices className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-icon text-gold-300! hover:text-gold-400!"
+                          disabled={!hasDmg}
+                          title={t.roll.rollTooltip(`${atk.name || t.page1.atkNamePh} — ${t.table.damage}`)}
+                          aria-label={t.roll.rollTooltip(`${atk.name || t.page1.atkNamePh} — ${t.table.damage}`)}
+                          onClick={() =>
+                            promptDamage({
+                              label: `${atk.name || t.page1.atkNamePh} — ${t.table.damage}`,
+                              damageRaw: atk.damageType,
+                            })
+                          }
+                        >
+                          <Swords className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-icon hover:text-blood-400!"
+                          disabled={readOnly}
+                          aria-label={t.page1.removeAttack}
+                          onClick={() => mutate((d) => void d.attacks.splice(i, 1))}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
+                    <TextInput
+                      bare
+                      value={atk.notes ?? ''}
+                      disabled={readOnly}
+                      placeholder={t.page1.atkNotesPh}
+                      className="mt-1 text-xs! text-ink-300!"
+                      onChange={(v) => mutate((d) => void (d.attacks[i].notes = v))}
+                    />
                   </div>
-                  <TextInput
-                    bare
-                    value={atk.notes ?? ''}
-                    disabled={readOnly}
-                    placeholder={t.page1.atkNotesPh}
-                    className="mt-1 text-xs! text-ink-300!"
-                    onChange={(v) => mutate((d) => void (d.attacks[i].notes = v))}
-                  />
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </Panel>

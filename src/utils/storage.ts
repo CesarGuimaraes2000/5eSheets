@@ -25,6 +25,8 @@ export const createBlankSpell = (): SpellItem => ({
   prepared: false,
   castingTime: '',
   range: '',
+  damage: '',
+  rollMode: 'attack',
   concentration: false,
   ritual: false,
   notes: '',
@@ -142,7 +144,13 @@ function mergeDefaults<T>(defaults: T, value: unknown): T {
 
 function normalizeSpell(raw: unknown): SpellItem {
   const base = mergeDefaults(createBlankSpell(), raw);
-  return { ...base, id: base.id || createId() };
+  const rollMode = isObject(raw) && raw.rollMode === 'dc' ? 'dc' : 'attack';
+  return {
+    ...base,
+    id: base.id || createId(),
+    damage: typeof base.damage === 'string' ? base.damage : '',
+    rollMode,
+  };
 }
 
 function normalizeLevels(raw: unknown): SpellLevelBlock[] {

@@ -159,6 +159,11 @@ export interface Translations {
     removeSpell: string;
     castingTimePh: string;
     rangePh: string;
+    damagePh: string;
+    modeAttack: string;
+    modeDc: string;
+    modeAttackTitle: string;
+    modeDcTitle: string;
     notesPh: string;
   };
   editor: {
@@ -272,6 +277,12 @@ export interface Translations {
     bonusLabel: string;
     diceLabel: string;
     rollDamageBtn: (notation: string) => string;
+    rollCritDamageBtn: (notation: string) => string;
+    rollDiceBtn: (notation: string) => string;
+    diceCountLabel: string;
+    dcNotice: (dc?: number) => string;
+    hitDiceSubtitle: string;
+    damageSubtitle: string;
     cancel: string;
     sentToDice: (label: string) => string;
     standaloneNotice: (summary: string) => string;
@@ -493,6 +504,11 @@ const en: Translations = {
     removeSpell: 'Remove spell',
     castingTimePh: 'Casting time',
     rangePh: 'Range',
+    damagePh: 'Damage (e.g. 2d10)',
+    modeAttack: 'Atk',
+    modeDc: 'DC',
+    modeAttackTitle: 'Spell Attack (rolls 1d20 + Spell Attack Bonus)',
+    modeDcTitle: 'Saving Throw DC (rolls normal 1d20 without attack bonus)',
     notesPh: 'Notes (not shared)',
   },
   editor: {
@@ -606,6 +622,13 @@ const en: Translations = {
     bonusLabel: 'Bonus',
     diceLabel: 'Dice',
     rollDamageBtn: (notation) => `Roll Damage (${notation})`,
+    rollCritDamageBtn: (notation) => `Critical (${notation})`,
+    rollDiceBtn: (notation) => `Roll in Dice (${notation})`,
+    diceCountLabel: 'Dice count',
+    dcNotice: (dc) =>
+      dc ? `Save DC ${dc} · Rolls normal 1d20 (+0)` : 'Save DC · Rolls normal 1d20 (+0)',
+    hitDiceSubtitle: 'Choose how many Hit Dice to roll with your Constitution modifier.',
+    damageSubtitle: 'Send the damage dice directly to the Dice extension.',
     cancel: 'Cancel',
     sentToDice: (label) => `Opening Dice for "${label}"...`,
     standaloneNotice: (summary) =>
@@ -828,6 +851,11 @@ const pt: Translations = {
     removeSpell: 'Remover magia',
     castingTimePh: 'Tempo de conjuração',
     rangePh: 'Alcance',
+    damagePh: 'Dano (ex: 2d10)',
+    modeAttack: 'Atq',
+    modeDc: 'CD',
+    modeAttackTitle: 'Ataque de Magia (rola 1d20 + Bônus de Ataque de Magia)',
+    modeDcTitle: 'Magia de CD / Salvaguarda (rola 1d20 normal sem bônus de ataque)',
     notesPh: 'Notas (não compartilhadas)',
   },
   editor: {
@@ -941,6 +969,13 @@ const pt: Translations = {
     bonusLabel: 'Bônus',
     diceLabel: 'Dados',
     rollDamageBtn: (notation) => `Rolar Dano (${notation})`,
+    rollCritDamageBtn: (notation) => `Crítico (${notation})`,
+    rollDiceBtn: (notation) => `Rolar no Dice (${notation})`,
+    diceCountLabel: 'Qtd. de dados',
+    dcNotice: (dc) =>
+      dc ? `CD ${dc} · Rola 1d20 normal (+0)` : 'Magia de CD · Rola 1d20 normal (+0)',
+    hitDiceSubtitle: 'Escolha quantos Dados de Vida rolar com seu modificador de Constituição.',
+    damageSubtitle: 'Envie os dados de dano diretamente para a extensão Dice.',
     cancel: 'Cancelar',
     sentToDice: (label) => `Abrindo Dice para "${label}"...`,
     standaloneNotice: (summary) =>

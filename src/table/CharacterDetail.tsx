@@ -23,7 +23,12 @@ import type { PartyMember } from '../obr/backend';
 import { ABILITIES, CONDITIONS, MAX_EXHAUSTION, SKILLS } from '../constants/dnd55Rules';
 import { useI18n } from '../i18n/I18nContext';
 import { formatModifier } from '../utils/calculations';
-import { parseBonusString } from '../utils/dice';
+import {
+  extractDiceNotation,
+  extractHitDieType,
+  isSaveDcText,
+  parseBonusString,
+} from '../utils/dice';
 import { useDiceRoller } from '../components/shared/DiceRoller';
 import { NumberInput, Panel, Pips, cx } from '../components/shared/ui';
 import { Portrait, hpTone } from './PartyCard';
@@ -101,7 +106,7 @@ export function CharacterDetail({
   onAssignOwner: (member: PartyMember) => void;
 }) {
   const { t } = useI18n();
-  const { promptRoll } = useDiceRoller();
+  const { promptRoll, promptHitDice, promptDamage } = useDiceRoller();
   const [amount, setAmount] = useState(0);
   const [cur, max, temp] = s.hp;
   const pct = max > 0 ? Math.min(100, Math.max(0, (cur / max) * 100)) : 0;
@@ -282,7 +287,15 @@ export function CharacterDetail({
           )}
           <div className="mt-3 grid grid-cols-2 gap-3 border-t border-ink-700/60 pt-3">
             <div className="flex flex-col gap-1.5">
-              <span className="field-label">{t.table.deathSaves}</span>
+              <button
+                type="button"
+                onClick={() => promptRoll({ label: t.table.deathSaves, bonus: 0 })}
+                title={t.roll.rollTooltip(t.table.deathSaves)}
+                className="field-label inline-flex cursor-pointer items-center gap-1 self-start transition-colors hover:text-gold-300"
+              >
+                <span>{t.table.deathSaves}</span>
+                <Dices className="h-3 w-3 text-gold-400/80" />
+              </button>
               <div className="flex items-center justify-between">
                 <span className="text-[11px] text-life-400">{t.table.successes}</span>
                 <Pips total={3} filled={s.ds[0]} tone="life" label={t.table.successLabel} disabled={ro}
@@ -295,7 +308,21 @@ export function CharacterDetail({
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
-              <span className="field-label">{t.table.hitDice}</span>
+              <button
+                type="button"
+                onClick={() =>
+                  promptHitDice({
+                    label: t.table.hitDice,
+                    dieType: extractHitDieType(s.hd[1], s.hd[0]),
+                    conMod: s.am[2] ?? 0,
+                  })
+                }
+                title={t.roll.rollTooltip(t.table.hitDice)}
+                className="field-label inline-flex cursor-pointer items-center gap-1 self-start transition-colors hover:text-gold-300"
+              >
+                <span>{t.table.hitDice}</span>
+                <Dices className="h-3 w-3 text-gold-400/80" />
+              </button>
               <div className="flex items-center gap-1.5 text-xs text-ink-300">
                 <input
                   className="input h-6 w-12 py-0! text-center"
@@ -428,32 +455,61 @@ export function CharacterDetail({
             <p className="py-3 text-center text-xs text-ink-400">{t.table.noAttacks}</p>
           ) : (
             <div className="flex flex-col gap-1">
-              {s.atk.map(([name, bonus, dmg], i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() =>
-                    promptRoll({
-                      label: name || t.table.attacks,
-                      bonus: parseBonusString(bonus, 0),
-                      damageRaw: dmg,
-                    })
-                  }
-                  title={t.roll.rollTooltip(name || t.table.attacks)}
-                  className="group grid w-full cursor-pointer grid-cols-[1fr_auto] items-center gap-2 rounded-md border border-transparent bg-ink-850/60 px-2 py-1.5 text-left transition-colors hover:border-gold-500/45 hover:bg-ink-800/80"
-                >
-                  <div className="min-w-0">
-                    <div className="truncate text-[13px] font-semibold text-ink-100 group-hover:text-gold-300">
-                      {name}
+              {s.atk.map(([name, bonus, dmg], i) => {
+                const isDc = isSaveDcText(bonus);
+                const parsedDmg = extractDiceNotation(dmg);
+                const openAttackPrompt = () =>
+                  promptRoll({
+                    label: name || t.table.attacks,
+                    bonus: isDc ? 0 : parseBonusString(bonus, 0),
+                    damageRaw: dmg,
+                    isSaveDc: isDc,
+                  });
+                return (
+                  <div
+                    key={i}
+                    className="grid grid-cols-[1fr_auto] items-center gap-2 rounded-md border border-transparent bg-ink-850/60 px-2 py-1.5 transition-colors hover:border-gold-500/35 hover:bg-ink-800/75"
+                  >
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <button
+                        type="button"
+                        onClick={openAttackPrompt}
+                        title={t.roll.rollTooltip(name || t.table.attacks)}
+                        className="cursor-pointer truncate text-left text-[13px] font-semibold text-ink-100 transition-colors hover:text-gold-300"
+                      >
+                        {name}
+                      </button>
+                      {parsedDmg ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            promptDamage({
+                              label: `${name || t.table.attacks} — ${t.table.damage}`,
+                              damageRaw: dmg,
+                            })
+                          }
+                          title={t.roll.rollTooltip(`${name || t.table.attacks} — ${t.table.damage}`)}
+                          className="inline-flex cursor-pointer items-center gap-1 self-start truncate text-left text-[11px] text-gold-400/90 transition-colors hover:text-gold-300"
+                        >
+                          <Swords className="h-2.5 w-2.5 shrink-0" />
+                          <span className="truncate">{dmg}</span>
+                        </button>
+                      ) : (
+                        <div className="truncate text-[11px] text-ink-400">{dmg || t.common.noneDash}</div>
+                      )}
                     </div>
-                    <div className="truncate text-[11px] text-ink-400">{dmg || t.common.noneDash}</div>
+                    <button
+                      type="button"
+                      onClick={openAttackPrompt}
+                      title={t.roll.rollTooltip(name || t.table.attacks)}
+                      className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-gold-500/40 px-1.5 py-0.5 text-xs font-bold text-gold-300 tabular-nums transition-colors hover:border-gold-400 hover:bg-gold-500/15"
+                    >
+                      <Dices className="h-3 w-3 text-gold-400/80" />
+                      {bonus || t.common.noneDash}
+                    </button>
                   </div>
-                  <span className="inline-flex items-center gap-1 rounded-md border border-gold-500/40 px-1.5 py-0.5 text-xs font-bold text-gold-300 tabular-nums group-hover:border-gold-400">
-                    <Dices className="h-3 w-3 text-gold-400/80" />
-                    {bonus || t.common.noneDash}
-                  </span>
-                </button>
-              ))}
+                );
+              })}
             </div>
           )}
         </Panel>
@@ -467,7 +523,21 @@ export function CharacterDetail({
             <div className="flex items-center gap-2 text-[11px] text-ink-300">
               {s.sc.cls && <span>{s.sc.cls}</span>}
               {scAbilityLabel && <span className="chip border-ink-700 text-ink-300">{scAbilityLabel}</span>}
-              <span className="chip border-arcane-500/50 text-arcane-400">{t.table.dcLabel} {s.sc.dc}</span>
+              <button
+                type="button"
+                onClick={() =>
+                  promptRoll({
+                    label: `${t.page3.spellSaveDc} (${t.table.dcLabel} ${s.sc?.dc ?? 10})`,
+                    bonus: 0,
+                    isSaveDc: true,
+                    dcValue: s.sc?.dc,
+                  })
+                }
+                title={t.roll.rollTooltip(t.page3.spellSaveDc)}
+                className="chip cursor-pointer border-arcane-500/50 text-arcane-400 transition-colors hover:border-gold-500/60 hover:bg-gold-500/15 hover:text-gold-300"
+              >
+                <Dices className="h-3 w-3" /> {t.table.dcLabel} {s.sc.dc}
+              </button>
               <button
                 type="button"
                 onClick={() =>
@@ -516,14 +586,58 @@ export function CharacterDetail({
                     <span className="field-label text-arcane-400!">{t.spellLevels[level]}</span>
                   </div>
                   <div className="flex flex-col gap-0.5">
-                    {s.sc!.sp.filter((sp) => sp[1] === level).map(([name, , flags, time, range], i) => (
-                      <div key={`${name}-${i}`} className="flex items-center gap-2 rounded px-1.5 py-1 hover:bg-ink-800/60">
-                        <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-ink-100">{name}</span>
-                        {flags & 2 ? <span className="chip border-arcane-500/50 px-1! py-0! text-[9px]! text-arcane-400" title={t.page3.concentration}>C</span> : null}
-                        {flags & 4 ? <span className="chip border-arcane-500/50 px-1! py-0! text-[9px]! text-arcane-400" title={t.page3.ritual}>R</span> : null}
-                        <span className="shrink-0 text-[10px] text-ink-400">{[time, range].filter(Boolean).join(' · ')}</span>
-                      </div>
-                    ))}
+                    {s.sc!.sp.filter((sp) => sp[1] === level).map(([name, , flags, time, range, dmg], i) => {
+                      const isDcSpell = Boolean(flags & 8);
+                      const parsedSpellDmg = dmg ? extractDiceNotation(dmg) : null;
+                      return (
+                        <div key={`${name}-${i}`} className="flex items-center gap-1.5 rounded px-1.5 py-1 hover:bg-ink-800/60">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              promptRoll({
+                                label: name,
+                                bonus: isDcSpell ? 0 : (s.sc?.at ?? 0),
+                                damageRaw: dmg,
+                                isSaveDc: isDcSpell,
+                                dcValue: isDcSpell ? s.sc?.dc : undefined,
+                              })
+                            }
+                            title={t.roll.rollTooltip(name)}
+                            className="inline-flex min-w-0 flex-1 cursor-pointer items-center gap-1 truncate text-left text-[12px] font-medium text-ink-100 transition-colors hover:text-gold-300"
+                          >
+                            <Dices className="h-3 w-3 shrink-0 text-gold-400/75" />
+                            <span className="truncate">{name}</span>
+                          </button>
+                          {isDcSpell && (
+                            <span
+                              className="chip border-arcane-500/40 px-1! py-0! text-[9px]! text-arcane-400"
+                              title={t.page3.modeDcTitle}
+                            >
+                              {t.page3.modeDc}
+                            </span>
+                          )}
+                          {parsedSpellDmg && dmg && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                promptDamage({
+                                  label: `${name} — ${t.table.damage}`,
+                                  damageRaw: dmg,
+                                })
+                              }
+                              title={t.roll.rollTooltip(`${name} — ${t.table.damage}`)}
+                              className="chip cursor-pointer border-gold-500/45 bg-gold-500/10 px-1.5! py-0! text-[10px]! text-gold-300 transition-colors hover:border-gold-400 hover:bg-gold-500/20"
+                            >
+                              <Swords className="h-2.5 w-2.5" />
+                              {parsedSpellDmg.notation}
+                            </button>
+                          )}
+                          {flags & 2 ? <span className="chip border-arcane-500/50 px-1! py-0! text-[9px]! text-arcane-400" title={t.page3.concentration}>C</span> : null}
+                          {flags & 4 ? <span className="chip border-arcane-500/50 px-1! py-0! text-[9px]! text-arcane-400" title={t.page3.ritual}>R</span> : null}
+                          <span className="shrink-0 text-[10px] text-ink-400">{[time, range].filter(Boolean).join(' · ')}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ))}

@@ -36,12 +36,16 @@ export interface Currency {
   pp: number;
 }
 
+export type SpellRollMode = 'attack' | 'dc';
+
 export interface SpellItem {
   id: string;
   name: string;
   prepared: boolean;
   castingTime: string; // "1 action", "1 bonus action", "1 reaction"...
   range: string; // "60 ft", "Self", "Touch"...
+  damage?: string; // e.g. "8d6 fire", "2d10+3"
+  rollMode?: SpellRollMode; // 'attack' (uses spellAttackBonus) or 'dc' (rolls normal 1d20+0)
   concentration: boolean;
   ritual: boolean;
   notes?: string; // Kept only in the full sheet, never shared with the room.

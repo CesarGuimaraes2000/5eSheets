@@ -2,6 +2,7 @@ import type { CharacterSheet } from '../types/character';
 import type { CharacterSummary, SummarySpell } from '../types/summary';
 import { ABILITY_KEYS, SKILLS, abilityAbbr } from '../constants/dnd55Rules';
 import { getEffectiveStats } from './calculations';
+import { extractDiceNotation, isSaveDcText } from './dice';
 
 const MAX_ATTACKS = 8;
 const cut = (s: string, max: number): string => (s.length > max ? s.slice(0, max) : s);
@@ -20,8 +21,22 @@ export function toSummary(sheet: CharacterSheet): CharacterSummary {
       if (!spell.name.trim()) continue;
       // Cantrips are always available; leveled spells only when prepared.
       if (block.level > 0 && !spell.prepared) continue;
-      const flags = (spell.prepared ? 1 : 0) | (spell.concentration ? 2 : 0) | (spell.ritual ? 4 : 0);
-      spells.push([cut(spell.name, 40), block.level, flags, cut(spell.castingTime, 16), cut(spell.range, 16)]);
+      const isDc =
+        spell.rollMode === 'dc' ||
+        isSaveDcText(spell.damage ?? '') ||
+        isSaveDcText(spell.notes ?? '');
+      const flags =
+        (spell.prepared ? 1 : 0) |
+        (spell.concentration ? 2 : 0) |
+        (spell.ritual ? 4 : 0) |
+        (isDc ? 8 : 0);
+      const rawDmg = spell.damage?.trim() || extractDiceNotation(spell.notes ?? '')?.notation || '';
+      const dmg = cut(rawDmg, 24);
+      spells.push(
+        dmg
+          ? [cut(spell.name, 40), block.level, flags, cut(spell.castingTime, 16), cut(spell.range, 16), dmg]
+          : [cut(spell.name, 40), block.level, flags, cut(spell.castingTime, 16), cut(spell.range, 16)],
+      );
     }
   }
 
