@@ -1,5 +1,6 @@
 import { Link2, Shield, UserRound } from 'lucide-react';
 import type { CharacterSummary } from '../types/summary';
+import { useI18n } from '../i18n/I18nContext';
 import { cx } from '../components/shared/ui';
 
 export function hpTone(s: CharacterSummary): string {
@@ -43,6 +44,7 @@ export function PartyCard({
   linkMode: boolean;
   onLink: () => void;
 }) {
+  const { t } = useI18n();
   const [cur, max, temp] = s.hp;
   const pct = max > 0 ? Math.min(100, Math.max(0, (cur / max) * 100)) : 0;
   return (
@@ -63,11 +65,17 @@ export function PartyCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <span className="truncate text-sm font-semibold text-ink-100">{s.n}</span>
-            {mine && <span className="chip border-gold-500/40 px-1.5! py-0! text-[9px]! text-gold-300">YOU</span>}
+            {mine && (
+              <span className="chip border-gold-500/40 px-1.5! py-0! text-[9px]! text-gold-300">
+                {t.table.youBadge}
+              </span>
+            )}
           </div>
-          <div className="truncate text-[11px] text-ink-400">{[s.sp, s.cl].filter(Boolean).join(' · ') || '—'}</div>
+          <div className="truncate text-[11px] text-ink-400">
+            {[s.sp, s.cl].filter(Boolean).join(' · ') || t.common.noneDash}
+          </div>
         </div>
-        <div className="relative flex h-9 w-8 shrink-0 items-center justify-center" title="Armor Class">
+        <div className="relative flex h-9 w-8 shrink-0 items-center justify-center" title={t.table.armorClassTitle}>
           <Shield className="absolute h-9 w-8 text-ink-700" strokeWidth={1.5} fill="currentColor" />
           <span className="relative font-display text-xs font-bold text-ink-100">{s.ac}</span>
         </div>
@@ -78,7 +86,7 @@ export function PartyCard({
         </div>
         <div className="mt-1 flex items-center justify-between text-[10px] text-ink-400">
           <span className="tabular-nums">
-            <b className="text-ink-100">{cur}</b>/{max} HP
+            <b className="text-ink-100">{cur}</b>/{max} {t.table.hpAbbr}
             {temp > 0 && <span className="ml-1 text-arcane-400">+{temp}</span>}
           </span>
           <span className="truncate pl-2">{s.on}</span>
@@ -86,10 +94,12 @@ export function PartyCard({
       </div>
       {(s.cnd.length > 0 || s.ex > 0) && (
         <div className="flex flex-wrap gap-1">
-          {s.ex > 0 && <span className="chip border-blood-500/50 text-blood-400">Exhaustion {s.ex}</span>}
+          {s.ex > 0 && (
+            <span className="chip border-blood-500/50 text-blood-400">{t.table.exhaustionBadge(s.ex)}</span>
+          )}
           {s.cnd.slice(0, 3).map((c) => (
             <span key={c} className="chip border-blood-500/40 text-blood-400">
-              {c}
+              {t.conditions[c] ?? c}
             </span>
           ))}
           {s.cnd.length > 3 && <span className="chip border-ink-700 text-ink-400">+{s.cnd.length - 3}</span>}
@@ -104,7 +114,7 @@ export function PartyCard({
             onLink();
           }}
         >
-          <Link2 className="h-3.5 w-3.5" /> Link to token
+          <Link2 className="h-3.5 w-3.5" /> {t.table.linkToToken}
         </button>
       )}
     </div>

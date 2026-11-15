@@ -4,11 +4,11 @@
   "manifest_version": 1,
   "author": "Fagundes",
   "description": "Bring your D&D 5.5 (2024) character sheets to the table: party HP, AC, skills, attacks and spell slots synced for everyone.",
-  "icon": "/icon.svg",
+  "icon": "/icon.png",
   "background_url": "/background.html",
   "action": {
     "title": "D&D 5.5 Sheets",
-    "icon": "/icon.svg",
+    "icon": "/icon.png",
     "popover": "/",
     "height": 760,
     "width": 920

@@ -1,4 +1,5 @@
 import type { ProficiencyLevel } from '../../types/character';
+import { useI18n } from '../../i18n/I18nContext';
 import { DerivedValue } from './DerivedValue';
 import { cx } from './ui';
 
@@ -6,12 +7,6 @@ const NEXT: Record<ProficiencyLevel, ProficiencyLevel> = {
   none: 'proficient',
   proficient: 'expertise',
   expertise: 'none',
-};
-
-const LABEL: Record<ProficiencyLevel, string> = {
-  none: 'Not proficient',
-  proficient: 'Proficient',
-  expertise: 'Expertise',
 };
 
 /** Click cycles: empty → proficient → expertise (or just on/off when `allowExpertise` is false). */
@@ -26,13 +21,16 @@ export function ProficiencyToggle({
   allowExpertise?: boolean;
   disabled?: boolean;
 }) {
+  const { t } = useI18n();
   const next = allowExpertise ? NEXT[level] : level === 'none' ? 'proficient' : 'none';
+  const currentLabel = t.shared.proficiencyLabel[level];
+  const nextLabel = t.shared.proficiencyLabel[next];
   return (
     <button
       type="button"
       disabled={disabled}
-      title={`${LABEL[level]} — click for ${LABEL[next].toLowerCase()}`}
-      aria-label={LABEL[level]}
+      title={`${currentLabel} — ${t.shared.clickFor(nextLabel)}`}
+      aria-label={currentLabel}
       onClick={() => onChange(next)}
       className={cx(
         'relative inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-all enabled:cursor-pointer enabled:hover:scale-110',

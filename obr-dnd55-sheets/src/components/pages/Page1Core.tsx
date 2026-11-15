@@ -1,7 +1,8 @@
 import { Heart, Minus, Plus, Shield, Sparkles, Trash2, Wind, Zap } from 'lucide-react';
 import type { SheetCtx } from '../sheetContext';
 import type { Currency } from '../../types/character';
-import { ABILITIES, CONDITIONS, MAX_EXHAUSTION, abilityAbbr } from '../../constants/dnd55Rules';
+import { ABILITIES, CONDITIONS, MAX_EXHAUSTION } from '../../constants/dnd55Rules';
+import { useI18n } from '../../i18n/I18nContext';
 import { clamp, formatModifier } from '../../utils/calculations';
 import { createBlankAttack } from '../../utils/storage';
 import { AbilityBox } from '../shared/AbilityBox';
@@ -9,17 +10,18 @@ import { DerivedValue } from '../shared/DerivedValue';
 import { SkillRow } from '../shared/SkillRow';
 import { Dot, Field, NumberInput, Panel, StatBox, TextArea, TextInput, Toggle, cx } from '../shared/ui';
 
-const COINS: { key: keyof Currency; label: string; color: string }[] = [
-  { key: 'cp', label: 'CP', color: 'text-orange-300' },
-  { key: 'sp', label: 'SP', color: 'text-slate-300' },
-  { key: 'ep', label: 'EP', color: 'text-sky-300' },
-  { key: 'gp', label: 'GP', color: 'text-gold-400' },
-  { key: 'pp', label: 'PP', color: 'text-violet-300' },
+const COINS: { key: keyof Currency; color: string }[] = [
+  { key: 'cp', color: 'text-orange-300' },
+  { key: 'sp', color: 'text-slate-300' },
+  { key: 'ep', color: 'text-sky-300' },
+  { key: 'gp', color: 'text-gold-400' },
+  { key: 'pp', color: 'text-violet-300' },
 ];
 
 /** Page 1 of the sheet: abilities, skills, combat, attacks, equipment and personality. */
 export function Page1Core({ ctx }: { ctx: SheetCtx }) {
   const { sheet, stats, mutate, readOnly } = ctx;
+  const { t } = useI18n();
   const auto = sheet.autoCalculate;
   const c = sheet.combat;
   const hpPct = c.hpMax > 0 ? clamp((c.hpCurrent / c.hpMax) * 100, 0, 100) : 0;
@@ -28,20 +30,26 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
     <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,0.95fr)]">
       {/* ================= COLUMN 1 ================= */}
       <div className="flex min-w-0 flex-col gap-3">
-        <Panel title="Ability Scores">
+        <Panel title={t.page1.abilityScores}>
           <div className="grid grid-cols-3 gap-2">
             {ABILITIES.map((a) => (
-              <AbilityBox key={a.key} ctx={ctx} ability={a.key} label={a.label} abbr={a.abbr} />
+              <AbilityBox
+                key={a.key}
+                ctx={ctx}
+                ability={a.key}
+                label={t.abilities[a.key].label}
+                abbr={t.abilities[a.key].abbr}
+              />
             ))}
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <div className="flex items-center justify-between gap-2 rounded-lg border border-ink-700 bg-ink-850/80 px-2 py-1.5">
-              <span className="field-label">Proficiency</span>
+              <span className="field-label">{t.page1.proficiency}</span>
               <DerivedValue
                 auto={auto}
                 readOnly={readOnly}
                 asModifier
-                label="Proficiency bonus"
+                label={t.page1.proficiencyBonus}
                 value={stats.proficiencyBonus}
                 onChange={(v) => mutate((d) => void (d.manualStats.proficiencyBonus = v))}
               />
@@ -57,18 +65,18 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
                   : 'border-ink-700 bg-ink-850/80 text-ink-400 hover:text-ink-100',
               )}
             >
-              <Sparkles className="h-3.5 w-3.5" /> Heroic Inspiration
+              <Sparkles className="h-3.5 w-3.5" /> {t.page1.heroicInspiration}
             </button>
           </div>
         </Panel>
 
-        <Panel title="Saving Throws" bodyClassName="p-2">
+        <Panel title={t.page1.savingThrows} bodyClassName="p-2">
           <div className="grid grid-cols-2 gap-x-1">
             {ABILITIES.map((a) => (
               <SkillRow
                 key={a.key}
-                name={a.label}
-                abilityAbbr={a.abbr}
+                name={t.abilities[a.key].label}
+                abilityAbbr={t.abilities[a.key].abbr}
                 level={sheet.savingThrows[a.key] ? 'proficient' : 'none'}
                 allowExpertise={false}
                 onLevelChange={(lvl) => mutate((d) => void (d.savingThrows[a.key] = lvl !== 'none'))}
@@ -82,16 +90,16 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
         </Panel>
 
         <Panel
-          title="Skills"
+          title={t.page1.skills}
           bodyClassName="p-2"
-          actions={<span className="text-[10px] text-ink-400">○ none · ● prof · ◉ expertise</span>}
+          actions={<span className="text-[10px] text-ink-400">{t.page1.skillsLegend}</span>}
         >
           <div className="flex flex-col">
             {sheet.skills.map((skill, i) => (
               <SkillRow
                 key={skill.id}
-                name={skill.name}
-                abilityAbbr={abilityAbbr(skill.ability)}
+                name={t.skills[skill.id] ?? skill.name}
+                abilityAbbr={t.abilities[skill.ability].abbr}
                 level={skill.proficiency}
                 onLevelChange={(lvl) => mutate((d) => void (d.skills[i].proficiency = lvl))}
                 total={stats.skills[skill.id] ?? 0}
@@ -102,23 +110,23 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
             ))}
           </div>
           <div className="mt-2 flex items-center justify-between rounded-lg border border-ink-700 bg-ink-850/80 px-2 py-1.5">
-            <span className="field-label">Passive Wisdom (Perception)</span>
+            <span className="field-label">{t.page1.passiveWisdom}</span>
             <DerivedValue
               auto={auto}
               readOnly={readOnly}
-              label="Passive perception"
+              label={t.page1.passivePerception}
               value={stats.passivePerception}
               onChange={(v) => mutate((d) => void (d.manualStats.passivePerception = v))}
             />
           </div>
         </Panel>
 
-        <Panel title="Other Proficiencies & Languages">
+        <Panel title={t.page1.otherProficiencies}>
           <TextArea
             id="other-proficiencies"
             value={sheet.otherProficienciesAndLanguages}
             disabled={readOnly}
-            placeholder="Armor, weapons, tools, languages..."
+            placeholder={t.page1.otherProficienciesPh}
             onChange={(v) => mutate((d) => void (d.otherProficienciesAndLanguages = v))}
           />
         </Panel>
@@ -127,7 +135,7 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
       {/* ================= COLUMN 2 ================= */}
       <div className="flex min-w-0 flex-col gap-3">
         <div className="grid grid-cols-3 gap-2">
-          <StatBox label={<span className="inline-flex items-center gap-1"><Shield className="h-3 w-3" /> Armor Class</span>}>
+          <StatBox label={<span className="inline-flex items-center gap-1"><Shield className="h-3 w-3" /> {t.page1.armorClass}</span>}>
             <NumberInput
               id="armor-class"
               value={c.armorClass}
@@ -139,18 +147,18 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
               onChange={(v) => mutate((d) => void (d.combat.armorClass = v))}
             />
           </StatBox>
-          <StatBox label={<span className="inline-flex items-center gap-1"><Zap className="h-3 w-3" /> Initiative</span>}>
+          <StatBox label={<span className="inline-flex items-center gap-1"><Zap className="h-3 w-3" /> {t.page1.initiative}</span>}>
             <DerivedValue
               auto={auto}
               readOnly={readOnly}
               asModifier
               size="lg"
-              label="Initiative"
+              label={t.page1.initiative}
               value={stats.initiative}
               onChange={(v) => mutate((d) => void (d.manualStats.initiative = v))}
             />
           </StatBox>
-          <StatBox label={<span className="inline-flex items-center gap-1"><Wind className="h-3 w-3" /> Speed</span>}>
+          <StatBox label={<span className="inline-flex items-center gap-1"><Wind className="h-3 w-3" /> {t.page1.speed}</span>}>
             <TextInput
               id="speed"
               value={c.speed}
@@ -162,7 +170,7 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
           </StatBox>
         </div>
 
-        <Panel title={<span className="inline-flex items-center gap-1.5"><Heart className="h-3 w-3" /> Hit Points</span>}>
+        <Panel title={<span className="inline-flex items-center gap-1.5"><Heart className="h-3 w-3" /> {t.page1.hitPoints}</span>}>
           <div className="mb-3 h-2 overflow-hidden rounded-full bg-ink-800">
             <div
               className={cx(
@@ -173,7 +181,7 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
             />
           </div>
           <div className="grid grid-cols-[1fr_1.4fr_1fr] items-end gap-2">
-            <Field label="Maximum" htmlFor="hp-max">
+            <Field label={t.page1.hpMax} htmlFor="hp-max">
               <NumberInput
                 id="hp-max"
                 value={c.hpMax}
@@ -182,13 +190,13 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
                 onChange={(v) => mutate((d) => void (d.combat.hpMax = v))}
               />
             </Field>
-            <Field label="Current" htmlFor="hp-current">
+            <Field label={t.page1.hpCurrent} htmlFor="hp-current">
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   className="btn-icon"
                   disabled={readOnly}
-                  aria-label="Decrease HP"
+                  aria-label={t.page1.hpDecrease}
                   onClick={() => mutate((d) => void (d.combat.hpCurrent = Math.max(0, d.combat.hpCurrent - 1)))}
                 >
                   <Minus className="h-3.5 w-3.5" />
@@ -205,7 +213,7 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
                   type="button"
                   className="btn-icon"
                   disabled={readOnly}
-                  aria-label="Increase HP"
+                  aria-label={t.page1.hpIncrease}
                   onClick={() =>
                     mutate((d) => void (d.combat.hpCurrent = Math.min(d.combat.hpMax, d.combat.hpCurrent + 1)))
                   }
@@ -214,7 +222,7 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
                 </button>
               </div>
             </Field>
-            <Field label="Temporary" htmlFor="hp-temp">
+            <Field label={t.page1.hpTemp} htmlFor="hp-temp">
               <NumberInput
                 id="hp-temp"
                 value={c.hpTemp}
@@ -228,9 +236,9 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
 
           <div className="mt-3 grid grid-cols-2 gap-3 border-t border-ink-700/60 pt-3">
             <div className="flex flex-col gap-2">
-              <span className="field-label">Hit Dice</span>
+              <span className="field-label">{t.page1.hitDice}</span>
               <div className="grid grid-cols-2 gap-1.5">
-                <Field label="Total" htmlFor="hd-total">
+                <Field label={t.page1.hdTotal} htmlFor="hd-total">
                   <TextInput
                     id="hd-total"
                     value={c.hitDiceTotal}
@@ -239,7 +247,7 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
                     onChange={(v) => mutate((d) => void (d.combat.hitDiceTotal = v))}
                   />
                 </Field>
-                <Field label="Remaining" htmlFor="hd-current">
+                <Field label={t.page1.hdRemaining} htmlFor="hd-current">
                   <TextInput
                     id="hd-current"
                     value={c.hitDiceCurrent}
@@ -250,9 +258,9 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              <span className="field-label">Death Saves</span>
+              <span className="field-label">{t.page1.deathSaves}</span>
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] text-life-400">Successes</span>
+                <span className="text-[11px] text-life-400">{t.page1.successes}</span>
                 <div className="flex gap-1">
                   {c.deathSaves.successes.map((v, i) => (
                     <Dot
@@ -260,14 +268,14 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
                       tone="life"
                       checked={v}
                       disabled={readOnly}
-                      title={`Success ${i + 1}`}
+                      title={`${t.page1.success} ${i + 1}`}
                       onChange={(nv) => mutate((d) => void (d.combat.deathSaves.successes[i] = nv))}
                     />
                   ))}
                 </div>
               </div>
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] text-blood-400">Failures</span>
+                <span className="text-[11px] text-blood-400">{t.page1.failures}</span>
                 <div className="flex gap-1">
                   {c.deathSaves.failures.map((v, i) => (
                     <Dot
@@ -275,7 +283,7 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
                       tone="blood"
                       checked={v}
                       disabled={readOnly}
-                      title={`Failure ${i + 1}`}
+                      title={`${t.page1.failure} ${i + 1}`}
                       onChange={(nv) => mutate((d) => void (d.combat.deathSaves.failures[i] = nv))}
                     />
                   ))}
@@ -286,10 +294,10 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
         </Panel>
 
         <Panel
-          title="Conditions"
+          title={t.page1.conditions}
           actions={
             <div className="flex items-center gap-1.5">
-              <span className="field-label">Exhaustion</span>
+              <span className="field-label">{t.page1.exhaustion}</span>
               <NumberInput
                 id="exhaustion"
                 value={c.exhaustion}
@@ -324,7 +332,7 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
                       : 'border-ink-700 text-ink-400 hover:border-ink-600 hover:text-ink-100',
                   )}
                 >
-                  {cond}
+                  {t.conditions[cond] ?? cond}
                 </button>
               );
             })}
@@ -332,7 +340,7 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
         </Panel>
 
         <Panel
-          title="Attacks & Spellcasting"
+          title={t.page1.attacksAndSpellcasting}
           bodyClassName="p-2"
           actions={
             !readOnly && (
@@ -342,19 +350,19 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
                 className="btn-ghost px-2! py-1!"
                 onClick={() => mutate((d) => void d.attacks.push(createBlankAttack()))}
               >
-                <Plus className="h-3 w-3" /> Add
+                <Plus className="h-3 w-3" /> {t.common.add}
               </button>
             )
           }
         >
           {sheet.attacks.length === 0 ? (
-            <p className="px-1 py-3 text-center text-xs text-ink-400">No attacks yet.</p>
+            <p className="px-1 py-3 text-center text-xs text-ink-400">{t.page1.noAttacks}</p>
           ) : (
             <div className="flex flex-col gap-1.5">
               <div className="grid grid-cols-[1.4fr_0.6fr_1.3fr_auto] gap-1.5 px-1">
-                <span className="field-label">Name</span>
-                <span className="field-label">Atk</span>
-                <span className="field-label">Damage / Type</span>
+                <span className="field-label">{t.page1.atkName}</span>
+                <span className="field-label">{t.page1.atkBonus}</span>
+                <span className="field-label">{t.page1.atkDamage}</span>
                 <span className="w-7" />
               </div>
               {sheet.attacks.map((atk, i) => (
@@ -363,7 +371,7 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
                     <TextInput
                       value={atk.name}
                       disabled={readOnly}
-                      placeholder="Longsword"
+                      placeholder={t.page1.atkNamePh}
                       onChange={(v) => mutate((d) => void (d.attacks[i].name = v))}
                     />
                     <TextInput
@@ -376,14 +384,14 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
                     <TextInput
                       value={atk.damageType}
                       disabled={readOnly}
-                      placeholder="1d8+3 slashing"
+                      placeholder={t.page1.atkDamagePh}
                       onChange={(v) => mutate((d) => void (d.attacks[i].damageType = v))}
                     />
                     <button
                       type="button"
                       className="btn-icon hover:text-blood-400!"
                       disabled={readOnly}
-                      aria-label="Remove attack"
+                      aria-label={t.page1.removeAttack}
                       onClick={() => mutate((d) => void d.attacks.splice(i, 1))}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -393,7 +401,7 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
                     bare
                     value={atk.notes ?? ''}
                     disabled={readOnly}
-                    placeholder="Notes / Weapon Mastery (Vex, Topple, Nick...)"
+                    placeholder={t.page1.atkNotesPh}
                     className="mt-1 text-xs! text-ink-300!"
                     onChange={(v) => mutate((d) => void (d.attacks[i].notes = v))}
                   />
@@ -403,11 +411,13 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
           )}
         </Panel>
 
-        <Panel title="Equipment">
+        <Panel title={t.page1.equipment}>
           <div className="mb-2 grid grid-cols-5 gap-1.5">
             {COINS.map((coin) => (
               <div key={coin.key} className="flex flex-col items-center gap-0.5">
-                <span className={cx('text-[10px] font-bold tracking-wider', coin.color)}>{coin.label}</span>
+                <span className={cx('text-[10px] font-bold tracking-wider', coin.color)}>
+                  {t.currencies[coin.key]}
+                </span>
                 <NumberInput
                   id={`coin-${coin.key}`}
                   value={sheet.currency[coin.key]}
@@ -424,7 +434,7 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
             value={sheet.equipment}
             disabled={readOnly}
             rows={6}
-            placeholder="Backpack, rope, rations..."
+            placeholder={t.page1.equipmentPh}
             onChange={(v) => mutate((d) => void (d.equipment = v))}
           />
         </Panel>
@@ -434,10 +444,10 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
       <div className="flex min-w-0 flex-col gap-3">
         {(
           [
-            ['traits', 'Personality Traits'],
-            ['ideals', 'Ideals'],
-            ['bonds', 'Bonds'],
-            ['flaws', 'Flaws'],
+            ['traits', t.page1.traits],
+            ['ideals', t.page1.ideals],
+            ['bonds', t.page1.bonds],
+            ['flaws', t.page1.flaws],
           ] as const
         ).map(([key, label]) => (
           <Panel key={key} title={label}>
@@ -450,13 +460,13 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
             />
           </Panel>
         ))}
-        <Panel title="Features & Traits" className="flex-1">
+        <Panel title={t.page1.featuresAndTraits} className="flex-1">
           <TextArea
             id="features-traits"
             value={sheet.featuresAndTraits}
             disabled={readOnly}
             rows={16}
-            placeholder="Class features, species traits, feats..."
+            placeholder={t.page1.featuresAndTraitsPh}
             onChange={(v) => mutate((d) => void (d.featuresAndTraits = v))}
           />
         </Panel>
@@ -464,13 +474,11 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
           <div className="rounded-lg border border-dashed border-ink-700 px-3 py-2 text-[11px] leading-relaxed text-ink-400">
             <Toggle
               checked={auto}
-              label="Automatic calculations"
+              label={t.page1.autoCalcLabel}
               onChange={ctx.setAutoCalculate}
             />
             <p className="mt-1">
-              {auto
-                ? 'Locked values are calculated from your scores. Turn this off in the header to edit them manually.'
-                : 'Manual mode: every calculated value can be edited freely.'}
+              {auto ? t.page1.autoCalcHintOn : t.page1.autoCalcHintOff}
             </p>
           </div>
         )}

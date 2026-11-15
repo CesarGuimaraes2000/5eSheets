@@ -1,5 +1,6 @@
 import { Lock } from 'lucide-react';
 import { formatModifier } from '../../utils/calculations';
+import { useI18n } from '../../i18n/I18nContext';
 import { NumberInput, cx } from './ui';
 
 /**
@@ -25,6 +26,8 @@ export function DerivedValue({
   className?: string;
   label?: string;
 }) {
+  const { t } = useI18n();
+  const displayLabel = label ?? t.shared.valueFallback;
   const sizes = {
     sm: 'w-10 text-xs',
     md: 'w-12 text-sm',
@@ -34,7 +37,7 @@ export function DerivedValue({
   if (auto || readOnly) {
     return (
       <span
-        title={auto ? `${label ?? 'Value'}: calculated automatically` : label}
+        title={auto ? t.shared.calculatedAuto(displayLabel) : label}
         aria-label={label}
         className={cx(
           'inline-flex items-center justify-center gap-0.5 rounded-md px-1 py-0.5 tabular-nums font-semibold text-gold-300',
@@ -52,7 +55,7 @@ export function DerivedValue({
     <NumberInput
       value={value}
       onChange={onChange}
-      title={`${label ?? 'Value'} (manual)`}
+      title={t.shared.manualTooltip(displayLabel)}
       className={cx(sizes[size], 'border-gold-600/50! px-1! py-0.5!', className)}
     />
   );

@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
   Copy,
-  Dices,
   Download,
   ExternalLink,
   FileJson,
@@ -12,6 +11,7 @@ import {
 } from 'lucide-react';
 import type { CharacterSheet } from '../types/character';
 import { useLocalSheets } from '../hooks/useLocalSheets';
+import { LanguageSwitch, useI18n } from '../i18n/I18nContext';
 import {
   createBlankCharacter,
   downloadSheet,
@@ -26,6 +26,7 @@ import { cx } from '../components/shared/ui';
 /** Standalone site: create and edit full character sheets stored in this browser. */
 export function EditorApp() {
   const { sheets, upsert, remove } = useLocalSheets();
+  const { lang, t } = useI18n();
   const toast = useToast();
   const list = useMemo(
     () => Object.values(sheets).sort((a, b) => b.updatedAt - a.updatedAt),
@@ -44,18 +45,19 @@ export function EditorApp() {
     const text = await pickJsonFile();
     if (!text) return;
     try {
-      const sheet = parseSheetFile(text);
+      const sheet = parseSheetFile(text, lang);
       const exists = Boolean(sheets[sheet.id]);
       upsert(sheet);
       setSelectedId(sheet.id);
-      toast.show(exists ? 'Character updated from file.' : 'Character imported.', 'success');
+      toast.show(exists ? t.editor.updatedFromFile : t.editor.imported, 'success');
     } catch (err) {
-      toast.show(err instanceof Error ? err.message : 'Could not import file.', 'error');
+      toast.show(err instanceof Error ? err.message : t.common.couldNotImport, 'error');
     }
   };
 
   const del = (sheet: CharacterSheet) => {
-    if (!window.confirm(`Delete "${sheet.header.characterName || 'Unnamed'}" from this browser?`)) return;
+    const name = sheet.header.characterName || t.common.unnamed;
+    if (!window.confirm(t.editor.confirmDelete(name))) return;
     remove(sheet.id);
     if (selectedId === sheet.id) setSelectedId(list.find((s) => s.id !== sheet.id)?.id ?? null);
   };
@@ -65,20 +67,19 @@ export function EditorApp() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* Top bar */}
-      <header className="flex items-center gap-3 border-b border-ink-800 bg-ink-950/70 px-4 py-2.5 backdrop-blur">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-gold-400 to-gold-600 text-ink-950 shadow-[0_0_20px_-4px_rgb(226_163_54/0.7)]">
-          <Dices className="h-4.5 w-4.5" />
-        </div>
+      <header className="flex flex-wrap items-center gap-3 border-b border-ink-800 bg-ink-950/70 px-4 py-2.5 backdrop-blur">
+        <img src="/icon.png" alt="" className="h-8 w-8 shrink-0 rounded-lg object-contain" />
         <div className="min-w-0">
-          <h1 className="font-display text-sm font-bold tracking-wide text-ink-100">D&amp;D 5.5 Character Sheets</h1>
-          <p className="text-[11px] text-ink-400">Full sheet editor · export JSON · import it at your Owlbear Rodeo table</p>
+          <h1 className="font-display text-sm font-bold tracking-wide text-ink-100">{t.editor.title}</h1>
+          <p className="text-[11px] text-ink-400">{t.editor.subtitle}</p>
         </div>
         <div className="ml-auto flex items-center gap-2">
+          <LanguageSwitch />
           <button id="import-json" type="button" className="btn-ghost" onClick={() => void importFile()}>
-            <Upload className="h-3.5 w-3.5" /> Import JSON
+            <Upload className="h-3.5 w-3.5" /> {t.common.importJson}
           </button>
           <button id="new-character" type="button" className="btn-primary" onClick={create}>
-            <Plus className="h-3.5 w-3.5" /> New Character
+            <Plus className="h-3.5 w-3.5" /> {t.common.newCharacter}
           </button>
         </div>
       </header>
@@ -86,8 +87,8 @@ export function EditorApp() {
       <div className="flex min-h-0 flex-1">
         {/* Sidebar */}
         <aside className="hidden w-64 shrink-0 flex-col gap-2 overflow-y-auto border-r border-ink-800 bg-ink-950/40 p-3 md:flex">
-          <h2 className="panel-title px-1">Your Characters</h2>
-          {list.length === 0 && <p className="px-1 text-xs text-ink-400">No characters yet.</p>}
+          <h2 className="panel-title px-1">{t.editor.yourCharacters}</h2>
+          {list.length === 0 && <p className="px-1 text-xs text-ink-400">{t.editor.noCharacters}</p>}
           {list.map((s) => (
             <button
               key={s.id}
@@ -109,18 +110,18 @@ export function EditorApp() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-semibold text-ink-100">
-                  {s.header.characterName || 'Unnamed Hero'}
+                  {s.header.characterName || t.common.unnamedHero}
                 </div>
                 <div className="truncate text-[11px] text-ink-400">
-                  {[s.header.speciesOrRace, s.header.classAndLevel].filter(Boolean).join(' · ') || '—'}
+                  {[s.header.speciesOrRace, s.header.classAndLevel].filter(Boolean).join(' · ') || t.common.noneDash}
                 </div>
               </div>
             </button>
           ))}
 
           <div className="mt-auto rounded-lg border border-ink-800 bg-ink-900/60 p-2.5 text-[11px] leading-relaxed text-ink-400">
-            <p className="mb-1 font-semibold text-ink-300">Owlbear Rodeo extension</p>
-            Add this URL in OBR → Extensions → Add:
+            <p className="mb-1 font-semibold text-ink-300">{t.editor.obrExtension}</p>
+            {t.editor.obrInstallHint}
             <code className="mt-1 block truncate rounded bg-ink-850 px-1.5 py-1 text-[10px] text-gold-300" title={manifestUrl}>
               {manifestUrl}
             </code>
@@ -138,7 +139,7 @@ export function EditorApp() {
             >
               {list.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.header.characterName || 'Unnamed Hero'}
+                  {s.header.characterName || t.common.unnamedHero}
                 </option>
               ))}
             </select>
@@ -155,18 +156,18 @@ export function EditorApp() {
                       id="export-json"
                       type="button"
                       className="btn-primary"
-                      title="Download this character as JSON (import it in Owlbear Rodeo)"
+                      title={t.editor.exportTitle}
                       onClick={() => downloadSheet(selected)}
                     >
-                      <Download className="h-3.5 w-3.5" /> Export JSON
+                      <Download className="h-3.5 w-3.5" /> {t.common.exportJson}
                     </button>
                     <button
                       type="button"
                       className="btn-icon"
-                      title="Duplicate"
-                      aria-label="Duplicate character"
+                      title={t.common.duplicate}
+                      aria-label={t.common.duplicate}
                       onClick={() => {
-                        const copy = duplicateSheet(selected);
+                        const copy = duplicateSheet(selected, lang);
                         upsert(copy);
                         setSelectedId(copy.id);
                       }}
@@ -176,8 +177,8 @@ export function EditorApp() {
                     <button
                       type="button"
                       className="btn-icon hover:text-blood-400!"
-                      title="Delete"
-                      aria-label="Delete character"
+                      title={t.common.delete}
+                      aria-label={t.common.delete}
                       onClick={() => del(selected)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -185,9 +186,7 @@ export function EditorApp() {
                   </div>
                 }
               />
-              <p className="mt-3 text-center text-[11px] text-ink-600">
-                Saved automatically in this browser · Export a JSON file to back it up or to use it in Owlbear Rodeo.
-              </p>
+              <p className="mt-3 text-center text-[11px] text-ink-600">{t.editor.autoSaveNote}</p>
             </div>
           ) : (
             <EmptyState onCreate={create} onImport={() => void importFile()} manifestUrl={manifestUrl} />
@@ -208,26 +207,27 @@ function EmptyState({
   onImport: () => void;
   manifestUrl: string;
 }) {
+  const { t } = useI18n();
   const steps = [
-    { icon: Plus, title: 'Create', text: 'Fill in the full 3-page D&D 5.5 sheet. Saved in your browser.' },
-    { icon: FileJson, title: 'Export', text: 'Download your character as a JSON file.' },
-    { icon: ExternalLink, title: 'Play', text: 'Import it in the Owlbear Rodeo extension. Only the essentials are shared with the table.' },
+    { icon: Plus, title: t.editor.step1Title, text: t.editor.step1Text },
+    { icon: FileJson, title: t.editor.step2Title, text: t.editor.step2Text },
+    { icon: ExternalLink, title: t.editor.step3Title, text: t.editor.step3Text },
   ];
   return (
     <div className="mx-auto flex max-w-3xl flex-col items-center px-4 py-12 text-center">
-      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-gold-400 to-gold-600 text-ink-950 shadow-[0_0_40px_-6px_rgb(226_163_54/0.7)]">
-        <Dices className="h-8 w-8" />
-      </div>
-      <h2 className="font-display text-3xl font-bold text-ink-100">Forge your next hero</h2>
-      <p className="mt-2 max-w-lg text-sm text-ink-300">
-        Complete character sheets for D&amp;D 5.5 (2024) with automatic calculations you can override anytime.
-      </p>
+      <img
+        src="/icon.png"
+        alt=""
+        className="mb-5 h-16 w-16 rounded-2xl object-contain drop-shadow-[0_0_24px_rgba(226,163,54,0.35)]"
+      />
+      <h2 className="font-display text-3xl font-bold text-ink-100">{t.editor.heroTitle}</h2>
+      <p className="mt-2 max-w-lg text-sm text-ink-300">{t.editor.heroSubtitle}</p>
       <div className="mt-6 flex gap-2">
         <button type="button" className="btn-primary px-4! py-2! text-sm!" onClick={onCreate}>
-          <Plus className="h-4 w-4" /> New Character
+          <Plus className="h-4 w-4" /> {t.common.newCharacter}
         </button>
         <button type="button" className="btn-ghost px-4! py-2! text-sm!" onClick={onImport}>
-          <Upload className="h-4 w-4" /> Import JSON
+          <Upload className="h-4 w-4" /> {t.common.importJson}
         </button>
       </div>
       <div className="mt-10 grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
@@ -245,7 +245,7 @@ function EmptyState({
         ))}
       </div>
       <p className="mt-6 text-[11px] text-ink-400">
-        Owlbear Rodeo manifest URL: <code className="text-gold-300">{manifestUrl}</code>
+        {t.editor.manifestUrlLabel} <code className="text-gold-300">{manifestUrl}</code>
       </p>
     </div>
   );

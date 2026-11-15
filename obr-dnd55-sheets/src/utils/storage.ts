@@ -9,6 +9,7 @@ import type {
 } from '../types/character';
 import { ABILITY_KEYS, SKILLS } from '../constants/dnd55Rules';
 import { FILE_FORMAT } from '../constants/keys';
+import { DICTIONARIES, type Lang } from '../i18n/translations';
 import { computeDerivedStats } from './calculations';
 
 /** Short random id (keeps room metadata small). */
@@ -214,18 +215,19 @@ const fileSchema = z.object({
   sheet: bareSheetSchema,
 });
 
-export function parseSheetFile(text: string): CharacterSheet {
+export function parseSheetFile(text: string, lang: Lang = 'en'): CharacterSheet {
+  const tr = DICTIONARIES[lang].common;
   let data: unknown;
   try {
     data = JSON.parse(text);
   } catch {
-    throw new Error('The file is not valid JSON.');
+    throw new Error(tr.invalidJson);
   }
   const wrapped = fileSchema.safeParse(data);
   if (wrapped.success) return normalizeSheet(wrapped.data.sheet);
   const bare = bareSheetSchema.safeParse(data);
   if (bare.success) return normalizeSheet(bare.data);
-  throw new Error('This JSON is not a D&D 5.5 character sheet.');
+  throw new Error(tr.notASheetJson);
 }
 
 export function serializeSheet(sheet: CharacterSheet): string {
@@ -265,12 +267,16 @@ export function pickJsonFile(): Promise<string | null> {
 }
 
 /** Creates a copy of a sheet with a fresh id. */
-export function duplicateSheet(sheet: CharacterSheet): CharacterSheet {
+export function duplicateSheet(sheet: CharacterSheet, lang: Lang = 'en'): CharacterSheet {
+  const tr = DICTIONARIES[lang].common;
   const copy = normalizeSheet(JSON.parse(JSON.stringify(sheet)) as unknown);
   return {
     ...copy,
     id: createId(),
     updatedAt: Date.now(),
-    header: { ...copy.header, characterName: `${copy.header.characterName || 'Unnamed'} (copy)` },
+    header: {
+      ...copy.header,
+      characterName: `${copy.header.characterName || tr.unnamed} (${tr.copySuffix})`,
+    },
   };
 }

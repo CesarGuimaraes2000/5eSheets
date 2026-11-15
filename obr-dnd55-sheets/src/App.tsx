@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
-import { Dices } from 'lucide-react';
 import { useOBR } from './hooks/useOBR';
+import { useI18n } from './i18n/I18nContext';
 import { EditorApp } from './editor/EditorApp';
 import { TableApp } from './table/TableApp';
 
 export function App() {
   const mode = useOBR();
+  const { t } = useI18n();
 
   useEffect(() => {
     document.body.classList.toggle('in-obr', mode.kind === 'table' && mode.backend.kind === 'obr');
@@ -13,9 +14,9 @@ export function App() {
 
   if (mode.kind === 'loading') {
     return (
-      <div className="flex h-full items-center justify-center gap-2 text-sm text-ink-300">
-        <Dices className="h-5 w-5 animate-spin text-gold-400" />
-        Connecting to Owlbear Rodeo...
+      <div className="flex h-full items-center justify-center gap-2.5 text-sm text-ink-300">
+        <img src="/icon.png" alt="" className="h-6 w-6 animate-pulse object-contain" />
+        {t.common.connectingObr}
       </div>
     );
   }

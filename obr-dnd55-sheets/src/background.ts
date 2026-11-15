@@ -11,7 +11,7 @@ OBR.onReady(() => {
     id: `${EXT_ID}/open-sheet`,
     icons: [
       {
-        icon: '/icon.svg',
+        icon: '/icon.png',
         label: 'Open D&D 5.5 Sheet',
         filter: {
           min: 1,
@@ -39,7 +39,7 @@ OBR.onReady(() => {
     id: `${EXT_ID}/link-sheet`,
     icons: [
       {
-        icon: '/icon.svg',
+        icon: '/icon.png',
         label: 'Link D&D 5.5 Sheet',
         filter: {
           min: 1,

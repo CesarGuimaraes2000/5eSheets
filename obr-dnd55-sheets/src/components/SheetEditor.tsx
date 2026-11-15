@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { BookOpen, ScrollText, Swords } from 'lucide-react';
 import type { CharacterSheet } from '../types/character';
+import { useI18n } from '../i18n/I18nContext';
 import { computeDerivedStats, getEffectiveStats } from '../utils/calculations';
 import type { SheetCtx } from './sheetContext';
 import { SheetHeader } from './layout/SheetHeader';
@@ -10,12 +11,6 @@ import { Page2Lore } from './pages/Page2Lore';
 import { Page3Spells } from './pages/Page3Spells';
 
 type Tab = 'core' | 'lore' | 'spells';
-
-const TABS: TabDef<Tab>[] = [
-  { id: 'core', label: 'Core & Combat', icon: Swords },
-  { id: 'lore', label: 'Details & Story', icon: ScrollText },
-  { id: 'spells', label: 'Spells & Grimoire', icon: BookOpen },
-];
 
 /** The full 3-page character sheet editor (used in the site and inside OBR). */
 export function SheetEditor({
@@ -32,6 +27,16 @@ export function SheetEditor({
   headerRight?: ReactNode;
 }) {
   const [tab, setTab] = useState<Tab>('core');
+  const { t } = useI18n();
+
+  const tabs: TabDef<Tab>[] = useMemo(
+    () => [
+      { id: 'core', label: t.tabs.core, icon: Swords },
+      { id: 'lore', label: t.tabs.lore, icon: ScrollText },
+      { id: 'spells', label: t.tabs.spells, icon: BookOpen },
+    ],
+    [t],
+  );
 
   const mutate = useCallback(
     (recipe: (draft: CharacterSheet) => void) => {
@@ -62,7 +67,7 @@ export function SheetEditor({
   return (
     <div className="flex flex-col gap-3">
       <SheetHeader ctx={ctx} left={headerLeft} right={headerRight} />
-      <TabNav tabs={TABS} active={tab} onChange={setTab} />
+      <TabNav tabs={tabs} active={tab} onChange={setTab} />
       <div key={tab} className="animate-fade-in">
         {tab === 'core' && <Page1Core ctx={ctx} />}
         {tab === 'lore' && <Page2Lore ctx={ctx} />}

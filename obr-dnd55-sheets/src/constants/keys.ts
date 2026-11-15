@@ -17,6 +17,7 @@ export const ROOM_METADATA_LIMIT = 16 * 1024;
 export const LS_SHEETS = 'dnd55.sheets.v1';
 export const LS_MOCK_ROOM = 'dnd55.mockRoom.v1';
 export const LS_MOCK_PLAYER = 'dnd55.mockPlayer.v1';
+export const LS_LANG = 'dnd55.lang.v1';
 
 /** Export file format marker. */
 export const FILE_FORMAT = 'dnd55-sheet';
