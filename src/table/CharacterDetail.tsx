@@ -87,6 +87,8 @@ export function CharacterDetail({
   if (!ownerOptions.some((p) => p.id === s.o)) {
     ownerOptions.unshift({ id: s.o, name: s.on || t.table.unknownPlayer });
   }
+  const scAbility = s.sc ? ABILITIES.find((a) => a.abbr === s.sc?.a) : undefined;
+  const scAbilityLabel = scAbility ? t.abilities[scAbility.key].abbr : (s.sc?.a ?? '');
 
   return (
     <div className="flex flex-col gap-3">
@@ -374,7 +376,7 @@ export function CharacterDetail({
           actions={
             <div className="flex items-center gap-2 text-[11px] text-ink-300">
               {s.sc.cls && <span>{s.sc.cls}</span>}
-              {s.sc.a && <span className="chip border-ink-700 text-ink-300">{s.sc.a}</span>}
+              {scAbilityLabel && <span className="chip border-ink-700 text-ink-300">{scAbilityLabel}</span>}
               <span className="chip border-arcane-500/50 text-arcane-400">{t.table.dcLabel} {s.sc.dc}</span>
               <span className="chip border-arcane-500/50 text-arcane-400">{t.table.atkLabel} {formatModifier(s.sc.at)}</span>
             </div>
