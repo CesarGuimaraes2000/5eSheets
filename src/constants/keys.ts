@@ -21,3 +21,7 @@ export const LS_LANG = 'dnd55.lang.v1';
 
 /** Export file format marker. */
 export const FILE_FORMAT = 'dnd55-sheet';
+
+/** Player metadata keys consumed by the DiceV2 extension to pre-fill and open a roll. */
+export const DICE_EXT_ROLL_KEY = 'rodeo.owlbear.dice/externalRollRequest';
+export const DICE_SHIM_ROLL_KEY = `${EXT_ID}/diceRequest`;

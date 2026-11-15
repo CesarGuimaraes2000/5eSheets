@@ -1,6 +1,8 @@
+import { Dices } from 'lucide-react';
 import type { ProficiencyLevel } from '../../types/character';
 import { useI18n } from '../../i18n/I18nContext';
 import { DerivedValue } from './DerivedValue';
+import { useDiceRoller } from './DiceRoller';
 import { cx } from './ui';
 
 const NEXT: Record<ProficiencyLevel, ProficiencyLevel> = {
@@ -47,6 +49,7 @@ export function ProficiencyToggle({
 /** One line of the skills / saving throws list. */
 export function SkillRow({
   name,
+  rollLabel,
   abilityAbbr,
   level,
   onLevelChange,
@@ -57,6 +60,7 @@ export function SkillRow({
   allowExpertise = true,
 }: {
   name: string;
+  rollLabel?: string;
   abilityAbbr: string;
   level: ProficiencyLevel;
   onLevelChange: (level: ProficiencyLevel) => void;
@@ -66,8 +70,12 @@ export function SkillRow({
   readOnly: boolean;
   allowExpertise?: boolean;
 }) {
+  const { t } = useI18n();
+  const { promptRoll } = useDiceRoller();
+  const resolvedRollLabel = rollLabel ?? name;
+
   return (
-    <div className="flex items-center gap-2 rounded-md px-1.5 py-[3px] transition-colors hover:bg-ink-800/60">
+    <div className="group flex items-center gap-2 rounded-md px-1.5 py-[3px] transition-colors hover:bg-ink-800/60">
       <ProficiencyToggle
         level={level}
         onChange={onLevelChange}
@@ -83,7 +91,15 @@ export function SkillRow({
         value={total}
         onChange={onTotalChange}
       />
-      <span className="min-w-0 flex-1 truncate text-[13px] text-ink-100">{name}</span>
+      <button
+        type="button"
+        onClick={() => promptRoll({ label: resolvedRollLabel, bonus: total })}
+        title={t.roll.rollTooltip(resolvedRollLabel)}
+        className="flex min-w-0 flex-1 cursor-pointer items-center gap-1.5 text-left text-[13px] text-ink-100 transition-colors hover:text-gold-300"
+      >
+        <span className="truncate">{name}</span>
+        <Dices className="h-3 w-3 shrink-0 text-gold-400/0 transition-colors group-hover:text-gold-400/80" />
+      </button>
       <span className="text-[10px] font-semibold tracking-wider text-ink-400">{abilityAbbr}</span>
     </div>
   );

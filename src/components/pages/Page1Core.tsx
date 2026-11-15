@@ -1,12 +1,14 @@
-import { Heart, Minus, Plus, Shield, Sparkles, Trash2, Wind, Zap } from 'lucide-react';
+import { Dices, Heart, Minus, Plus, Shield, Sparkles, Trash2, Wind, Zap } from 'lucide-react';
 import type { SheetCtx } from '../sheetContext';
 import type { Currency } from '../../types/character';
 import { ABILITIES, CONDITIONS, MAX_EXHAUSTION } from '../../constants/dnd55Rules';
 import { useI18n } from '../../i18n/I18nContext';
 import { clamp, formatModifier } from '../../utils/calculations';
+import { parseBonusString } from '../../utils/dice';
 import { createBlankAttack } from '../../utils/storage';
 import { AbilityBox } from '../shared/AbilityBox';
 import { DerivedValue } from '../shared/DerivedValue';
+import { useDiceRoller } from '../shared/DiceRoller';
 import { SkillRow } from '../shared/SkillRow';
 import { Dot, Field, NumberInput, Panel, StatBox, TextArea, TextInput, Toggle, cx } from '../shared/ui';
 
@@ -22,6 +24,7 @@ const COINS: { key: keyof Currency; color: string }[] = [
 export function Page1Core({ ctx }: { ctx: SheetCtx }) {
   const { sheet, stats, mutate, readOnly } = ctx;
   const { t } = useI18n();
+  const { promptRoll } = useDiceRoller();
   const auto = sheet.autoCalculate;
   const c = sheet.combat;
   const hpPct = c.hpMax > 0 ? clamp((c.hpCurrent / c.hpMax) * 100, 0, 100) : 0;
@@ -76,6 +79,7 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
               <SkillRow
                 key={a.key}
                 name={t.abilities[a.key].label}
+                rollLabel={`${t.table.savingThrowTitle} — ${t.abilities[a.key].label}`}
                 abilityAbbr={t.abilities[a.key].abbr}
                 level={sheet.savingThrows[a.key] ? 'proficient' : 'none'}
                 allowExpertise={false}
@@ -147,7 +151,19 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
               onChange={(v) => mutate((d) => void (d.combat.armorClass = v))}
             />
           </StatBox>
-          <StatBox label={<span className="inline-flex items-center gap-1"><Zap className="h-3 w-3" /> {t.page1.initiative}</span>}>
+          <StatBox
+            label={
+              <button
+                type="button"
+                onClick={() => promptRoll({ label: t.page1.initiative, bonus: stats.initiative })}
+                title={t.roll.rollTooltip(t.page1.initiative)}
+                className="inline-flex cursor-pointer items-center gap-1 transition-colors hover:text-gold-300"
+              >
+                <Zap className="h-3 w-3" /> {t.page1.initiative}
+                <Dices className="h-3 w-3 text-gold-400/80" />
+              </button>
+            }
+          >
             <DerivedValue
               auto={auto}
               readOnly={readOnly}
@@ -363,7 +379,7 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
                 <span className="field-label">{t.page1.atkName}</span>
                 <span className="field-label">{t.page1.atkBonus}</span>
                 <span className="field-label">{t.page1.atkDamage}</span>
-                <span className="w-7" />
+                <span className="w-[60px]" />
               </div>
               {sheet.attacks.map((atk, i) => (
                 <div key={atk.id} className="rounded-md bg-ink-850/60 p-1">
@@ -387,15 +403,35 @@ export function Page1Core({ ctx }: { ctx: SheetCtx }) {
                       placeholder={t.page1.atkDamagePh}
                       onChange={(v) => mutate((d) => void (d.attacks[i].damageType = v))}
                     />
-                    <button
-                      type="button"
-                      className="btn-icon hover:text-blood-400!"
-                      disabled={readOnly}
-                      aria-label={t.page1.removeAttack}
-                      onClick={() => mutate((d) => void d.attacks.splice(i, 1))}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        className="btn-icon text-gold-400! hover:text-gold-300!"
+                        title={t.roll.rollTooltip(atk.name || t.page1.atkNamePh)}
+                        aria-label={t.roll.rollTooltip(atk.name || t.page1.atkNamePh)}
+                        onClick={() =>
+                          promptRoll({
+                            label: atk.name || t.page1.atkNamePh,
+                            bonus: parseBonusString(
+                              atk.atkBonus,
+                              stats.proficiencyBonus + stats.abilityModifiers.strength,
+                            ),
+                            damageRaw: atk.damageType,
+                          })
+                        }
+                      >
+                        <Dices className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-icon hover:text-blood-400!"
+                        disabled={readOnly}
+                        aria-label={t.page1.removeAttack}
+                        onClick={() => mutate((d) => void d.attacks.splice(i, 1))}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                   <TextInput
                     bare

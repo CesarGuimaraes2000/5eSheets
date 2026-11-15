@@ -1,10 +1,11 @@
-import { Plus, Trash2, Wand2 } from 'lucide-react';
+import { Dices, Plus, Trash2, Wand2 } from 'lucide-react';
 import type { SheetCtx } from '../sheetContext';
 import type { AbilityKey, SpellLevelBlock } from '../../types/character';
 import { ABILITIES } from '../../constants/dnd55Rules';
 import { useI18n } from '../../i18n/I18nContext';
 import { createBlankSpell } from '../../utils/storage';
 import { DerivedValue } from '../shared/DerivedValue';
+import { useDiceRoller } from '../shared/DiceRoller';
 import { Dot, Field, NumberInput, Panel, Pips, TextInput, cx } from '../shared/ui';
 
 function FlagChip({
@@ -191,6 +192,7 @@ function SpellLevelCard({ ctx, block, index }: { ctx: SheetCtx; block: SpellLeve
 export function Page3Spells({ ctx }: { ctx: SheetCtx }) {
   const { sheet, stats, mutate, readOnly } = ctx;
   const { t } = useI18n();
+  const { promptRoll } = useDiceRoller();
   const sc = sheet.spellcasting;
   const auto = sheet.autoCalculate;
 
@@ -235,7 +237,15 @@ export function Page3Spells({ ctx }: { ctx: SheetCtx }) {
           />
         </div>
         <div className="flex flex-col items-center gap-1 rounded-lg border border-ink-700 bg-ink-850/80 py-1.5">
-          <span className="field-label">{t.page3.spellAttack}</span>
+          <button
+            type="button"
+            onClick={() => promptRoll({ label: t.page3.spellAttack, bonus: stats.spellAttackBonus })}
+            title={t.roll.rollTooltip(t.page3.spellAttack)}
+            className="field-label inline-flex cursor-pointer items-center gap-1 transition-colors hover:text-gold-300"
+          >
+            <span>{t.page3.spellAttack}</span>
+            <Dices className="h-3 w-3 text-gold-400/80" />
+          </button>
           <DerivedValue
             auto={auto}
             readOnly={readOnly}

@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import {
   BookOpen,
+  Dices,
   Download,
   Heart,
   HeartPulse,
@@ -22,19 +23,55 @@ import type { PartyMember } from '../obr/backend';
 import { ABILITIES, CONDITIONS, MAX_EXHAUSTION, SKILLS } from '../constants/dnd55Rules';
 import { useI18n } from '../i18n/I18nContext';
 import { formatModifier } from '../utils/calculations';
+import { parseBonusString } from '../utils/dice';
+import { useDiceRoller } from '../components/shared/DiceRoller';
 import { NumberInput, Panel, Pips, cx } from '../components/shared/ui';
 import { Portrait, hpTone } from './PartyCard';
 
 type Recipe = (draft: CharacterSummary) => void;
 
-function Tile({ icon, label, children }: { icon: ReactNode; label: string; children: ReactNode }) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-1 rounded-lg border border-ink-700 bg-ink-850/80 px-1 py-2">
+function Tile({
+  icon,
+  label,
+  onClick,
+  title,
+  children,
+}: {
+  icon: ReactNode;
+  label: string;
+  onClick?: () => void;
+  title?: string;
+  children: ReactNode;
+}) {
+  const inner = (
+    <>
       <span className="field-label inline-flex items-center gap-1">
         {icon}
         {label}
+        {onClick && (
+          <Dices className="h-2.5 w-2.5 text-gold-400/75 transition-colors group-hover:text-gold-300" />
+        )}
       </span>
       <span className="stat-value text-lg!">{children}</span>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        title={title}
+        className="group flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-ink-700 bg-ink-850/80 px-1 py-2 transition-colors hover:border-gold-500/60 hover:bg-ink-800/90"
+      >
+        {inner}
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center gap-1 rounded-lg border border-ink-700 bg-ink-850/80 px-1 py-2">
+      {inner}
     </div>
   );
 }
@@ -64,6 +101,7 @@ export function CharacterDetail({
   onAssignOwner: (member: PartyMember) => void;
 }) {
   const { t } = useI18n();
+  const { promptRoll } = useDiceRoller();
   const [amount, setAmount] = useState(0);
   const [cur, max, temp] = s.hp;
   const pct = max > 0 ? Math.min(100, Math.max(0, (cur / max) * 100)) : 0;
@@ -171,7 +209,14 @@ export function CharacterDetail({
       {/* Stat tiles */}
       <div className="grid grid-cols-5 gap-2">
         <Tile icon={<Shield className="h-3 w-3" />} label={t.table.tileAc}>{s.ac}</Tile>
-        <Tile icon={<Zap className="h-3 w-3" />} label={t.table.tileInit}>{formatModifier(s.ini)}</Tile>
+        <Tile
+          icon={<Zap className="h-3 w-3" />}
+          label={t.table.tileInit}
+          onClick={() => promptRoll({ label: t.page1.initiative, bonus: s.ini })}
+          title={t.roll.rollTooltip(t.page1.initiative)}
+        >
+          {formatModifier(s.ini)}
+        </Tile>
         <Tile icon={<Wind className="h-3 w-3" />} label={t.table.tileSpeed}>
           <span className="text-sm">{s.spd || t.common.noneDash}</span>
         </Tile>
@@ -304,21 +349,42 @@ export function CharacterDetail({
       {/* Abilities & saves */}
       <Panel title={t.table.abilitiesAndSaves} bodyClassName="grid grid-cols-6 gap-2 p-3">
         {ABILITIES.map((a, i) => (
-          <div key={a.key} className="flex flex-col items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-850/70 py-2">
-            <span className="font-display text-[10px] font-bold tracking-[0.18em] text-ink-300">
-              {t.abilities[a.key].abbr}
-            </span>
-            <span className="stat-value text-gold-300!">{formatModifier(s.am[i] ?? 0)}</span>
-            <span className="text-[10px] text-ink-400">{s.ab[i]}</span>
-            <span
+          <div
+            key={a.key}
+            className="flex flex-col items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-850/70 px-1 py-1.5"
+          >
+            <button
+              type="button"
+              onClick={() =>
+                promptRoll({ label: t.abilities[a.key].label, bonus: s.am[i] ?? 0 })
+              }
+              title={t.roll.rollTooltip(t.abilities[a.key].label)}
+              className="group flex w-full cursor-pointer flex-col items-center gap-0.5 rounded py-0.5 transition-colors hover:bg-ink-800/75"
+            >
+              <span className="inline-flex items-center gap-0.5 font-display text-[10px] font-bold tracking-[0.18em] text-ink-300 group-hover:text-gold-300">
+                {t.abilities[a.key].abbr}
+              </span>
+              <span className="stat-value text-gold-300!">{formatModifier(s.am[i] ?? 0)}</span>
+              <span className="text-[10px] text-ink-400">{s.ab[i]}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                promptRoll({
+                  label: `${t.table.savingThrowTitle} — ${t.abilities[a.key].label}`,
+                  bonus: s.sv[i] ?? 0,
+                })
+              }
               className={cx(
-                'mt-1 rounded-full px-1.5 text-[10px] font-semibold',
-                s.svp & (1 << i) ? 'bg-gold-500/20 text-gold-300' : 'text-ink-400',
+                'mt-0.5 inline-flex cursor-pointer items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold transition-colors',
+                s.svp & (1 << i)
+                  ? 'bg-gold-500/20 text-gold-300 hover:bg-gold-500/35'
+                  : 'text-ink-400 hover:bg-ink-800 hover:text-ink-100',
               )}
-              title={t.table.savingThrowTitle}
+              title={t.roll.rollTooltip(`${t.table.savingThrowTitle} (${t.abilities[a.key].abbr})`)}
             >
               {t.table.savePrefix} {formatModifier(s.sv[i] ?? 0)}
-            </span>
+            </button>
           </div>
         ))}
       </Panel>
@@ -328,8 +394,15 @@ export function CharacterDetail({
         <Panel title={t.table.skills} bodyClassName="grid grid-cols-2 gap-x-2 p-2">
           {SKILLS.map((sk, i) => {
             const p = s.skp[i] ?? '0';
+            const skillName = t.skills[sk.id] ?? sk.name;
             return (
-              <div key={sk.id} className="flex items-center gap-1.5 rounded px-1 py-[3px] hover:bg-ink-800/60">
+              <button
+                key={sk.id}
+                type="button"
+                onClick={() => promptRoll({ label: skillName, bonus: s.sk[i] ?? 0 })}
+                title={t.roll.rollTooltip(skillName)}
+                className="group flex w-full cursor-pointer items-center gap-1.5 rounded px-1 py-[3px] text-left transition-colors hover:bg-ink-800/80"
+              >
                 <span
                   className={cx(
                     'h-2.5 w-2.5 shrink-0 rounded-full border',
@@ -341,8 +414,10 @@ export function CharacterDetail({
                 <span className="w-7 text-right text-xs font-semibold text-gold-300 tabular-nums">
                   {formatModifier(s.sk[i] ?? 0)}
                 </span>
-                <span className="truncate text-[12px] text-ink-100">{t.skills[sk.id] ?? sk.name}</span>
-              </div>
+                <span className="min-w-0 flex-1 truncate text-[12px] text-ink-100 group-hover:text-gold-300">
+                  {skillName}
+                </span>
+              </button>
             );
           })}
         </Panel>
@@ -354,15 +429,30 @@ export function CharacterDetail({
           ) : (
             <div className="flex flex-col gap-1">
               {s.atk.map(([name, bonus, dmg], i) => (
-                <div key={i} className="grid grid-cols-[1fr_auto] items-center gap-2 rounded-md bg-ink-850/60 px-2 py-1.5">
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() =>
+                    promptRoll({
+                      label: name || t.table.attacks,
+                      bonus: parseBonusString(bonus, 0),
+                      damageRaw: dmg,
+                    })
+                  }
+                  title={t.roll.rollTooltip(name || t.table.attacks)}
+                  className="group grid w-full cursor-pointer grid-cols-[1fr_auto] items-center gap-2 rounded-md border border-transparent bg-ink-850/60 px-2 py-1.5 text-left transition-colors hover:border-gold-500/45 hover:bg-ink-800/80"
+                >
                   <div className="min-w-0">
-                    <div className="truncate text-[13px] font-semibold text-ink-100">{name}</div>
+                    <div className="truncate text-[13px] font-semibold text-ink-100 group-hover:text-gold-300">
+                      {name}
+                    </div>
                     <div className="truncate text-[11px] text-ink-400">{dmg || t.common.noneDash}</div>
                   </div>
-                  <span className="rounded-md border border-gold-500/40 px-1.5 py-0.5 text-xs font-bold text-gold-300 tabular-nums">
+                  <span className="inline-flex items-center gap-1 rounded-md border border-gold-500/40 px-1.5 py-0.5 text-xs font-bold text-gold-300 tabular-nums group-hover:border-gold-400">
+                    <Dices className="h-3 w-3 text-gold-400/80" />
                     {bonus || t.common.noneDash}
                   </span>
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -378,7 +468,19 @@ export function CharacterDetail({
               {s.sc.cls && <span>{s.sc.cls}</span>}
               {scAbilityLabel && <span className="chip border-ink-700 text-ink-300">{scAbilityLabel}</span>}
               <span className="chip border-arcane-500/50 text-arcane-400">{t.table.dcLabel} {s.sc.dc}</span>
-              <span className="chip border-arcane-500/50 text-arcane-400">{t.table.atkLabel} {formatModifier(s.sc.at)}</span>
+              <button
+                type="button"
+                onClick={() =>
+                  promptRoll({
+                    label: t.page3.spellAttack,
+                    bonus: s.sc?.at ?? 0,
+                  })
+                }
+                title={t.roll.rollTooltip(t.page3.spellAttack)}
+                className="chip cursor-pointer border-arcane-500/50 text-arcane-400 transition-colors hover:border-gold-500/60 hover:bg-gold-500/15 hover:text-gold-300"
+              >
+                <Dices className="h-3 w-3" /> {t.table.atkLabel} {formatModifier(s.sc.at)}
+              </button>
             </div>
           }
         >

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useOBR } from './hooks/useOBR';
 import { useI18n } from './i18n/I18nContext';
+import { DiceRollerProvider } from './components/shared/DiceRoller';
 import { EditorApp } from './editor/EditorApp';
 import { TableApp } from './table/TableApp';
 
@@ -21,9 +22,13 @@ export function App() {
     );
   }
 
-  if (mode.kind === 'table') {
-    return <TableApp backend={mode.backend} player={mode.player} />;
-  }
-
-  return <EditorApp />;
+  return (
+    <DiceRollerProvider>
+      {mode.kind === 'table' ? (
+        <TableApp backend={mode.backend} player={mode.player} />
+      ) : (
+        <EditorApp />
+      )}
+    </DiceRollerProvider>
+  );
 }

@@ -260,6 +260,23 @@ export interface Translations {
     slotUsedLabel: (level: number) => string;
     noPreparedSpells: string;
   };
+  roll: {
+    modalTitle: string;
+    subtitle: string;
+    normal: string;
+    advantage: string;
+    disadvantage: string;
+    normalHint: string;
+    advantageHint: string;
+    disadvantageHint: string;
+    bonusLabel: string;
+    diceLabel: string;
+    rollDamageBtn: (notation: string) => string;
+    cancel: string;
+    sentToDice: (label: string) => string;
+    standaloneNotice: (summary: string) => string;
+    rollTooltip: (label: string) => string;
+  };
 }
 
 const en: Translations = {
@@ -493,7 +510,7 @@ const en: Translations = {
     heroTitle: 'Forge your next hero',
     heroSubtitle: 'Complete character sheets for D&D 5.5 (2024) with automatic calculations you can override anytime.',
     step1Title: 'Create',
-    step1Text: 'Fill in the full 3-page D&D 5.5 sheet. Saved in your browser.',
+    step1Text: 'Fill in your D&D 5.5 sheet. Saved in your browser.',
     step2Title: 'Export',
     step2Text: 'Download your character as a JSON file.',
     step3Title: 'Play',
@@ -576,6 +593,24 @@ const en: Translations = {
     atkLabel: 'Atk',
     slotUsedLabel: (level) => `Level ${level} slot used`,
     noPreparedSpells: 'No cantrips or prepared spells.',
+  },
+  roll: {
+    modalTitle: 'Roll in Dice',
+    subtitle: 'Choose the roll mode to open the Dice extension with your bonus applied.',
+    normal: 'Normal',
+    advantage: 'Advantage',
+    disadvantage: 'Disadvantage',
+    normalHint: '1d20',
+    advantageHint: '2d20 · keep highest',
+    disadvantageHint: '2d20 · keep lowest',
+    bonusLabel: 'Bonus',
+    diceLabel: 'Dice',
+    rollDamageBtn: (notation) => `Roll Damage (${notation})`,
+    cancel: 'Cancel',
+    sentToDice: (label) => `Opening Dice for "${label}"...`,
+    standaloneNotice: (summary) =>
+      `Roll prepared (${summary}). Inside Owlbear Rodeo, this automatically opens the Dice extension.`,
+    rollTooltip: (label) => `Roll ${label} in Dice`,
   },
 };
 
@@ -810,7 +845,7 @@ const pt: Translations = {
     heroTitle: 'Forje seu próximo herói',
     heroSubtitle: 'Fichas completas para D&D 5.5 (2024) com cálculos automáticos que podem ser ajustados manualmente.',
     step1Title: 'Crie',
-    step1Text: 'Preencha a ficha completa de 3 páginas do D&D 5.5. Salvo no seu navegador.',
+    step1Text: 'Preencha a ficha completa de 3 D&D 5.5. Salvo no seu navegador.',
     step2Title: 'Exporte',
     step2Text: 'Baixe seu personagem como um arquivo JSON.',
     step3Title: 'Jogue',
@@ -893,6 +928,24 @@ const pt: Translations = {
     atkLabel: 'Atq',
     slotUsedLabel: (level) => `Espaço de ${level}º círculo gasto`,
     noPreparedSpells: 'Nenhum truque ou magia preparada.',
+  },
+  roll: {
+    modalTitle: 'Rolar no Dice',
+    subtitle: 'Escolha o modo da rolagem para abrir a extensão de dados com o bônus aplicado.',
+    normal: 'Normal',
+    advantage: 'Vantagem',
+    disadvantage: 'Desvantagem',
+    normalHint: '1d20',
+    advantageHint: '2d20 · maior valor',
+    disadvantageHint: '2d20 · menor valor',
+    bonusLabel: 'Bônus',
+    diceLabel: 'Dados',
+    rollDamageBtn: (notation) => `Rolar Dano (${notation})`,
+    cancel: 'Cancelar',
+    sentToDice: (label) => `Abrindo Dice para "${label}"...`,
+    standaloneNotice: (summary) =>
+      `Rolagem preparada (${summary}). Dentro do Owlbear Rodeo, isso abre automaticamente a extensão Dice.`,
+    rollTooltip: (label) => `Rolar ${label} no Dice`,
   },
 };
 
