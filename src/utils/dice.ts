@@ -119,9 +119,14 @@ export function extractDiceNotation(
 export async function sendRollToDiceExtension(
   payload: Omit<ExternalRollPayload, 'id'>,
 ): Promise<'obr' | 'standalone'> {
+  const notation =
+    payload.notation ??
+    (payload.dice ? formatDiceSummary(payload.dice, payload.bonus ?? 0) : undefined);
+
   const req: ExternalRollPayload = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     ...payload,
+    ...(notation ? { notation } : {}),
   };
 
   try {
