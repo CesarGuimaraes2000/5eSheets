@@ -1,0 +1,144 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Cinzel', ui-serif, Georgia, serif;
+
+  --color-ink-950: #0b0d12;
+  --color-ink-900: #11141b;
+  --color-ink-850: #161a23;
+  --color-ink-800: #1c212c;
+  --color-ink-700: #272d3b;
+  --color-ink-600: #364053;
+  --color-ink-400: #7d879c;
+  --color-ink-300: #a6aec0;
+  --color-ink-100: #e6e9f0;
+
+  --color-gold-300: #f6d58a;
+  --color-gold-400: #f0bf55;
+  --color-gold-500: #e2a336;
+  --color-gold-600: #b97d1f;
+
+  --color-blood-400: #f0646e;
+  --color-blood-500: #d94452;
+  --color-blood-700: #7c1f2a;
+
+  --color-arcane-400: #9b8cff;
+  --color-arcane-500: #7c6cf2;
+
+  --color-life-400: #4fd18b;
+  --color-life-500: #2fb36f;
+
+  --animate-fade-in: fade-in 180ms ease-out;
+  --animate-pop: pop 220ms cubic-bezier(0.2, 0.9, 0.3, 1.4);
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes pop {
+    0% {
+      transform: scale(0.85);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-ink-950 text-ink-100 font-sans antialiased;
+    background-image:
+      radial-gradient(1200px 600px at 10% -10%, rgb(226 163 54 / 0.08), transparent 60%),
+      radial-gradient(900px 500px at 110% 10%, rgb(124 108 242 / 0.08), transparent 60%);
+    background-attachment: fixed;
+  }
+  /* Transparent background inside the Owlbear Rodeo popover. */
+  body.in-obr {
+    background: transparent;
+  }
+  ::selection {
+    background: rgb(226 163 54 / 0.35);
+  }
+
+  /* Hide native number spinners. */
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  /* Scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-ink-600) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: var(--color-ink-600);
+    border-radius: 999px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* Tailwind v4: custom classes are declared with @utility so they can be composed with @apply. */
+@utility panel {
+  @apply rounded-xl border border-ink-700/70 bg-ink-900/80 shadow-[0_1px_0_0_rgb(255_255_255/0.03)_inset,0_8px_24px_-12px_rgb(0_0_0/0.6)] backdrop-blur-sm;
+}
+@utility panel-title {
+  @apply font-display text-[11px] font-bold tracking-[0.14em] text-gold-400 uppercase;
+}
+@utility field-label {
+  @apply text-[10px] font-semibold tracking-wider text-ink-400 uppercase;
+}
+@utility input {
+  @apply w-full rounded-md border border-ink-700 bg-ink-850 px-2 py-1 text-sm text-ink-100 transition-colors outline-none placeholder:text-ink-600 hover:border-ink-600 focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 disabled:cursor-not-allowed disabled:opacity-60;
+}
+@utility input-bare {
+  @apply w-full border-0 border-b border-ink-700 bg-transparent px-0.5 py-0.5 text-sm text-ink-100 transition-colors outline-none placeholder:text-ink-600 hover:border-ink-600 focus:border-gold-500 disabled:cursor-not-allowed;
+}
+@utility textarea {
+  @apply input min-h-[84px] resize-y leading-relaxed;
+}
+@utility btn {
+  @apply inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all select-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50;
+}
+@utility btn-primary {
+  @apply btn bg-gradient-to-b from-gold-400 to-gold-600 text-ink-950 shadow-[0_4px_14px_-4px_rgb(226_163_54/0.6)] hover:brightness-110;
+}
+@utility btn-ghost {
+  @apply btn border border-ink-700 bg-ink-850 text-ink-100 hover:border-ink-600 hover:bg-ink-800;
+}
+@utility btn-danger {
+  @apply btn border border-blood-700 bg-blood-700/30 text-blood-400 hover:bg-blood-700/50;
+}
+@utility btn-icon {
+  @apply inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-ink-400 transition-colors hover:bg-ink-800 hover:text-ink-100 disabled:cursor-not-allowed disabled:opacity-40;
+}
+@utility chip {
+  @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium;
+}
+@utility stat-value {
+  @apply font-display text-xl leading-none font-bold text-ink-100 tabular-nums;
+}
