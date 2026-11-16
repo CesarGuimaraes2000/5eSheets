@@ -59,7 +59,7 @@ export function EditorApp() {
 
   const create = () => {
     if (mode === 'monsters') {
-      const m = createBlankMonster();
+      const m = createBlankMonster(lang);
       upsertMonster(m);
       setSelectedMonsterId(m.id);
       setMonsterTab('edit');

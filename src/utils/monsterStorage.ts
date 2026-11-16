@@ -274,7 +274,7 @@ export const createBlankMonsterEntry = (
   damage: init?.damage ?? '',
 });
 
-export function createBlankMonster(): MonsterSheet {
+export function createBlankMonster(lang: Lang = 'en'): MonsterSheet {
   return {
     schemaVersion: 1,
     id: createId(),
@@ -290,7 +290,7 @@ export function createBlankMonster(): MonsterSheet {
     hpMax: 20,
     hpTemp: 0,
     hpFormula: '3d8+6',
-    speed: '9 m',
+    speed: lang === 'pt' ? '9 m' : '30 ft',
     challengeRating: '1',
     proficiencyBonus: 2,
     xp: '200',
@@ -622,7 +622,7 @@ export function fromGiffyglyphBlueprint(raw: Json, lang: Lang = 'pt'): MonsterSh
     hpMax,
     hpTemp: 0,
     hpFormula: toStr(hpObj.roll),
-    speed: speedParts.join(', ') || '9 m',
+    speed: speedParts.join(', ') || (lang === 'pt' ? '9 m' : '30 ft'),
     challengeRating: cr,
     proficiencyBonus: pb,
     xp,

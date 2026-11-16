@@ -311,22 +311,33 @@ export interface Translations {
     statblockView: string;
     nameLabel: string;
     size: string;
+    sizePh: string;
     creatureType: string;
+    creatureTypePh: string;
     alignment: string;
+    alignmentPh: string;
     portraitUrl: string;
     challengeRating: string;
     xp: string;
     crPrefix: string;
     acType: string;
+    acTypePh: string;
     hpFormula: string;
     rollHpFormulaTitle: string;
     initiativeLabel: string;
+    speedPh: string;
     vulnerabilities: string;
+    vulnerabilitiesPh: string;
     resistances: string;
+    resistancesPh: string;
     damageImmunities: string;
+    damageImmunitiesPh: string;
     conditionImmunities: string;
+    conditionImmunitiesPh: string;
     senses: string;
+    sensesPh: string;
     languages: string;
+    languagesPh: string;
     defensesAndSenses: string;
     traits: string;
     actions: string;
@@ -335,6 +346,7 @@ export interface Translations {
     legendaryActions: string;
     lairActions: string;
     notes: string;
+    notesPh: string;
     entryNamePh: string;
     entryAtkPh: string;
     entryDcPh: string;
@@ -720,22 +732,33 @@ const en: Translations = {
     statblockView: 'Statblock & Rolls',
     nameLabel: 'Monster Name',
     size: 'Size',
+    sizePh: 'Large',
     creatureType: 'Creature Type',
+    creatureTypePh: 'Aberration',
     alignment: 'Alignment',
+    alignmentPh: 'Neutral Evil',
     portraitUrl: 'Image URL',
     challengeRating: 'Challenge (CR)',
     xp: 'XP',
     crPrefix: 'CR',
     acType: 'Armor Type',
+    acTypePh: 'Natural Armor',
     hpFormula: 'HP Formula (e.g. 4d8+8)',
     rollHpFormulaTitle: 'Roll HP dice in Dice',
     initiativeLabel: 'Initiative Bonus',
+    speedPh: '30 ft, fly 60 ft',
     vulnerabilities: 'Damage Vulnerabilities',
+    vulnerabilitiesPh: 'Radiant, Fire...',
     resistances: 'Damage Resistances',
+    resistancesPh: 'Poison, Necrotic...',
     damageImmunities: 'Damage Immunities',
+    damageImmunitiesPh: 'Cold, Psychic...',
     conditionImmunities: 'Condition Immunities',
+    conditionImmunitiesPh: 'Charmed, Frightened, Paralyzed...',
     senses: 'Senses',
+    sensesPh: 'Darkvision 60 ft',
     languages: 'Languages',
+    languagesPh: 'Undercommon, Common',
     defensesAndSenses: 'Defenses, Senses & Skills',
     traits: 'Traits',
     actions: 'Actions',
@@ -744,6 +767,7 @@ const en: Translations = {
     legendaryActions: 'Legendary Actions',
     lairActions: 'Lair Actions',
     notes: 'GM Notes',
+    notesPh: 'Tactics, lore, phase triggers, loot...',
     entryNamePh: 'Action / trait name',
     entryAtkPh: 'Atk (e.g. +4)',
     entryDcPh: 'DC (e.g. 14)',
@@ -1129,22 +1153,33 @@ const pt: Translations = {
     statblockView: 'Ficha & Rolagens',
     nameLabel: 'Nome do Monstro',
     size: 'Tamanho',
+    sizePh: 'Grande',
     creatureType: 'Tipo de Criatura',
+    creatureTypePh: 'Aberração',
     alignment: 'Tendência',
+    alignmentPh: 'Neutro e Mau',
     portraitUrl: 'URL da Imagem',
     challengeRating: 'Nível de Desafio (ND)',
     xp: 'XP',
     crPrefix: 'ND',
     acType: 'Tipo de Armadura',
+    acTypePh: 'Armadura Natural',
     hpFormula: 'Fórmula de PV (ex.: 4d8+8)',
     rollHpFormulaTitle: 'Rolar dados de PV no Dice',
     initiativeLabel: 'Bônus de Iniciativa',
+    speedPh: '12 m, voo 9 m',
     vulnerabilities: 'Vulnerabilidades a Dano',
+    vulnerabilitiesPh: 'Radiante, Ígneo...',
     resistances: 'Resistências a Dano',
+    resistancesPh: 'Veneno, Necrótico...',
     damageImmunities: 'Imunidades a Dano',
+    damageImmunitiesPh: 'Frio, Psíquico...',
     conditionImmunities: 'Imunidades a Condições',
+    conditionImmunitiesPh: 'Enfeitiçado, Amedrontado, Paralisado...',
     senses: 'Sentidos',
+    sensesPh: 'Visão no Escuro 18 m',
     languages: 'Idiomas',
+    languagesPh: 'Subcomum, Comum',
     defensesAndSenses: 'Defesas, Sentidos e Perícias',
     traits: 'Traços',
     actions: 'Ações',
@@ -1153,6 +1188,7 @@ const pt: Translations = {
     legendaryActions: 'Ações Lendárias',
     lairActions: 'Ações de Covil',
     notes: 'Anotações do Mestre',
+    notesPh: 'Táticas, história, gatilhos de fase, recompensas...',
     entryNamePh: 'Nome do ataque / traço',
     entryAtkPh: 'Atq (ex: +4)',
     entryDcPh: 'CD (ex: 14)',

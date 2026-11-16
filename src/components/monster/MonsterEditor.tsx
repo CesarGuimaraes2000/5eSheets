@@ -138,21 +138,21 @@ export function MonsterEditor({
           <Field label={t.monster.size}>
             <TextInput
               value={m.size}
-              placeholder="Grande / Large"
+              placeholder={t.monster.sizePh}
               onChange={(v) => mutate((d) => void (d.size = v))}
             />
           </Field>
           <Field label={t.monster.creatureType}>
             <TextInput
               value={m.creatureType}
-              placeholder="Aberração / Aberration"
+              placeholder={t.monster.creatureTypePh}
               onChange={(v) => mutate((d) => void (d.creatureType = v))}
             />
           </Field>
           <Field label={t.monster.alignment}>
             <TextInput
               value={m.alignment}
-              placeholder="Neutro e Mau"
+              placeholder={t.monster.alignmentPh}
               onChange={(v) => mutate((d) => void (d.alignment = v))}
             />
           </Field>
@@ -209,7 +209,7 @@ export function MonsterEditor({
           <Field label={t.monster.acType}>
             <TextInput
               value={m.acType}
-              placeholder="armadura natural"
+              placeholder={t.monster.acTypePh}
               onChange={(v) => mutate((d) => void (d.acType = v))}
             />
           </Field>
@@ -252,21 +252,21 @@ export function MonsterEditor({
           <Field label={t.page1.speed}>
             <TextInput
               value={m.speed}
-              placeholder="12 m, voo 9 m"
+              placeholder={t.monster.speedPh}
               onChange={(v) => mutate((d) => void (d.speed = v))}
             />
           </Field>
           <Field label={t.monster.senses}>
             <TextInput
               value={m.senses}
-              placeholder="Visão no Escuro 18 m"
+              placeholder={t.monster.sensesPh}
               onChange={(v) => mutate((d) => void (d.senses = v))}
             />
           </Field>
           <Field label={t.monster.languages}>
             <TextInput
               value={m.languages}
-              placeholder="Subcomum, Comum"
+              placeholder={t.monster.languagesPh}
               onChange={(v) => mutate((d) => void (d.languages = v))}
             />
           </Field>
@@ -375,24 +375,28 @@ export function MonsterEditor({
             <Field label={t.monster.vulnerabilities}>
               <TextInput
                 value={m.vulnerabilities}
+                placeholder={t.monster.vulnerabilitiesPh}
                 onChange={(v) => mutate((d) => void (d.vulnerabilities = v))}
               />
             </Field>
             <Field label={t.monster.resistances}>
               <TextInput
                 value={m.resistances}
+                placeholder={t.monster.resistancesPh}
                 onChange={(v) => mutate((d) => void (d.resistances = v))}
               />
             </Field>
             <Field label={t.monster.damageImmunities}>
               <TextInput
                 value={m.damageImmunities}
+                placeholder={t.monster.damageImmunitiesPh}
                 onChange={(v) => mutate((d) => void (d.damageImmunities = v))}
               />
             </Field>
             <Field label={t.monster.conditionImmunities}>
               <TextInput
                 value={m.conditionImmunities}
+                placeholder={t.monster.conditionImmunitiesPh}
                 onChange={(v) => mutate((d) => void (d.conditionImmunities = v))}
               />
             </Field>
@@ -416,6 +420,7 @@ export function MonsterEditor({
         <TextArea
           value={m.notes}
           rows={3}
+          placeholder={t.monster.notesPh}
           onChange={(v) => mutate((d) => void (d.notes = v))}
         />
       </Panel>

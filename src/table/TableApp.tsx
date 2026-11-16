@@ -243,7 +243,7 @@ export function TableApp({ backend, player }: { backend: RoomBackend; player: Pl
 
   const handleCreateQuick = () => {
     if (section === 'monsters' && isGM) {
-      const monster = createBlankMonster();
+      const monster = createBlankMonster(lang);
       upsertMonster(monster);
       setSelectedMonsterId(monster.id);
       setEditingMonster(true);
