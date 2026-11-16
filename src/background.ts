@@ -1,5 +1,10 @@
 import OBR from '@owlbear-rodeo/sdk';
-import { EXT_ID, PLAYER_REQUEST_KEY, TOKEN_LINK_KEY } from './constants/keys';
+import {
+  EXT_ID,
+  PLAYER_REQUEST_KEY,
+  TOKEN_LINK_KEY,
+  TOKEN_MONSTER_LINK_KEY,
+} from './constants/keys';
 
 /**
  * Background script loaded by Owlbear Rodeo (`background_url` in manifest.json).
@@ -53,6 +58,35 @@ OBR.onReady(() => {
       if (!item) return;
       await OBR.player.setMetadata({
         [PLAYER_REQUEST_KEY]: { type: 'link', itemId: item.id, ts: Date.now() },
+      });
+      await OBR.action.open();
+    },
+  });
+
+  // 3. GM-only: Open linked monster statblock when the token has a linked monster
+  void OBR.contextMenu.create({
+    id: `${EXT_ID}/open-monster`,
+    icons: [
+      {
+        icon: '/icon.png',
+        label: 'Open GM Monster',
+        filter: {
+          min: 1,
+          max: 1,
+          roles: ['GM'],
+          every: [
+            { key: 'layer', value: 'CHARACTER' },
+            { key: ['metadata', TOKEN_MONSTER_LINK_KEY], value: undefined, operator: '!=' },
+          ],
+        },
+      },
+    ],
+    onClick: async (context) => {
+      const item = context.items[0];
+      const monsterId = item?.metadata[TOKEN_MONSTER_LINK_KEY];
+      if (typeof monsterId !== 'string') return;
+      await OBR.player.setMetadata({
+        [PLAYER_REQUEST_KEY]: { type: 'open-monster', monsterId, ts: Date.now() },
       });
       await OBR.action.open();
     },

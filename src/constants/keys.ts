@@ -25,3 +25,12 @@ export const FILE_FORMAT = 'dnd55-sheet';
 /** Player metadata keys consumed by the DiceV2 extension to pre-fill and open a roll. */
 export const DICE_EXT_ROLL_KEY = 'rodeo.owlbear.dice/externalRollRequest';
 export const DICE_SHIM_ROLL_KEY = `${EXT_ID}/diceRequest`;
+
+/** Item (token) metadata: id of the GM monster linked to that token. */
+export const TOKEN_MONSTER_LINK_KEY = `${EXT_ID}/monster`;
+
+/** localStorage key for GM monsters. */
+export const LS_MONSTERS = 'dnd55.monsters.v1';
+
+/** Export file format marker for monsters. */
+export const MONSTER_FILE_FORMAT = 'dnd55-monster';

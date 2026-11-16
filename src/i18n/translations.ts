@@ -288,6 +288,67 @@ export interface Translations {
     standaloneNotice: (summary: string) => string;
     rollTooltip: (label: string) => string;
   };
+  monster: {
+    sectionParty: string;
+    sectionMonsters: string;
+    tabTitle: string;
+    gmOnlyBadge: string;
+    gmOnlyImportError: string;
+    monstersCount: (count: number) => string;
+    newMonster: string;
+    newMonsterShort: string;
+    unnamedMonster: string;
+    emptyTitle: string;
+    emptySubtitle: string;
+    importedMonster: (name: string) => string;
+    createdMonster: string;
+    confirmDelete: (name: string) => string;
+    deletedMonster: (name: string) => string;
+    duplicateInstance: string;
+    duplicateInstanceTitle: string;
+    editMonster: string;
+    backToStatblock: string;
+    statblockView: string;
+    nameLabel: string;
+    size: string;
+    creatureType: string;
+    alignment: string;
+    portraitUrl: string;
+    challengeRating: string;
+    xp: string;
+    crPrefix: string;
+    acType: string;
+    hpFormula: string;
+    rollHpFormulaTitle: string;
+    initiativeLabel: string;
+    vulnerabilities: string;
+    resistances: string;
+    damageImmunities: string;
+    conditionImmunities: string;
+    senses: string;
+    languages: string;
+    defensesAndSenses: string;
+    traits: string;
+    actions: string;
+    bonusActions: string;
+    reactions: string;
+    legendaryActions: string;
+    lairActions: string;
+    notes: string;
+    entryNamePh: string;
+    entryAtkPh: string;
+    entryDcPh: string;
+    entryDamagePh: string;
+    entryDetailPh: string;
+    addSkill: string;
+    skillNamePh: string;
+    rollAttackBtn: (bonus: string) => string;
+    rollDcBtn: (dc: number) => string;
+    rollDamageBtn: (notation: string) => string;
+    privateNotice: string;
+    fallbackMonsterName: string;
+    tokenLinked: (name: string) => string;
+  };
 }
 
 const en: Translations = {
@@ -635,6 +696,68 @@ const en: Translations = {
       `Roll prepared (${summary}). Inside Owlbear Rodeo, this automatically opens the Dice extension.`,
     rollTooltip: (label) => `Roll ${label} in Dice`,
   },
+  monster: {
+    sectionParty: 'Party',
+    sectionMonsters: 'Monsters (GM)',
+    tabTitle: 'Enemies',
+    gmOnlyBadge: 'GM ONLY',
+    gmOnlyImportError: 'Only the GM can import monster files to the table.',
+    monstersCount: (count) => `Enemies · GM (${count})`,
+    newMonster: 'New Monster',
+    newMonsterShort: 'New Monster',
+    unnamedMonster: 'Unnamed Monster',
+    emptyTitle: 'No enemies yet',
+    emptySubtitle:
+      'Import a Giffyglyph Monster Maker blueprint JSON or create a monster manually. Everything here is visible only to the GM and uses 0 bytes of room storage.',
+    importedMonster: (name) => `"${name}" added to GM enemies.`,
+    createdMonster: 'Monster created.',
+    confirmDelete: (name) => `Delete monster "${name}"?`,
+    deletedMonster: (name) => `"${name}" deleted.`,
+    duplicateInstance: 'Duplicate #',
+    duplicateInstanceTitle: 'Create another combat copy (e.g. #2) with full HP',
+    editMonster: 'Edit',
+    backToStatblock: 'Back to Statblock',
+    statblockView: 'Statblock & Rolls',
+    nameLabel: 'Monster Name',
+    size: 'Size',
+    creatureType: 'Creature Type',
+    alignment: 'Alignment',
+    portraitUrl: 'Image URL',
+    challengeRating: 'Challenge (CR)',
+    xp: 'XP',
+    crPrefix: 'CR',
+    acType: 'Armor Type',
+    hpFormula: 'HP Formula (e.g. 4d8+8)',
+    rollHpFormulaTitle: 'Roll HP dice in Dice',
+    initiativeLabel: 'Initiative Bonus',
+    vulnerabilities: 'Damage Vulnerabilities',
+    resistances: 'Damage Resistances',
+    damageImmunities: 'Damage Immunities',
+    conditionImmunities: 'Condition Immunities',
+    senses: 'Senses',
+    languages: 'Languages',
+    defensesAndSenses: 'Defenses, Senses & Skills',
+    traits: 'Traits',
+    actions: 'Actions',
+    bonusActions: 'Bonus Actions',
+    reactions: 'Reactions',
+    legendaryActions: 'Legendary Actions',
+    lairActions: 'Lair Actions',
+    notes: 'GM Notes',
+    entryNamePh: 'Action / trait name',
+    entryAtkPh: 'Atk (e.g. +4)',
+    entryDcPh: 'DC (e.g. 14)',
+    entryDamagePh: 'Dmg (e.g. 2d6+2)',
+    entryDetailPh: 'Description (e.g. +4 to hit. 8 (2d6 + 2) bludgeoning damage.)',
+    addSkill: 'Add Skill',
+    skillNamePh: 'Perception',
+    rollAttackBtn: (bonus) => `Atk ${bonus}`,
+    rollDcBtn: (dc) => `DC ${dc} · 1d20`,
+    rollDamageBtn: (notation) => notation,
+    privateNotice: 'Stored locally for the GM only — players cannot see enemies or room stats.',
+    fallbackMonsterName: 'monster',
+    tokenLinked: (name) => `Token linked to ${name} (GM).`,
+  },
 };
 
 const pt: Translations = {
@@ -981,6 +1104,68 @@ const pt: Translations = {
     standaloneNotice: (summary) =>
       `Rolagem preparada (${summary}). Dentro do Owlbear Rodeo, isso abre automaticamente a extensão Dice.`,
     rollTooltip: (label) => `Rolar ${label} no Dice`,
+  },
+  monster: {
+    sectionParty: 'Personagens',
+    sectionMonsters: 'Monstros (GM)',
+    tabTitle: 'Inimigos',
+    gmOnlyBadge: 'SÓ MESTRE',
+    gmOnlyImportError: 'Somente o Mestre pode importar monstros para a mesa.',
+    monstersCount: (count) => `Inimigos · GM (${count})`,
+    newMonster: 'Novo Monstro',
+    newMonsterShort: 'Novo Monstro',
+    unnamedMonster: 'Monstro Sem Nome',
+    emptyTitle: 'Nenhum inimigo cadastrado',
+    emptySubtitle:
+      'Importe um JSON do Giffyglyph Monster Maker (blueprint) ou crie um monstro manualmente. Tudo aqui é privado do Mestre e não ocupa espaço da sala.',
+    importedMonster: (name) => `"${name}" adicionado aos inimigos do Mestre.`,
+    createdMonster: 'Monstro criado.',
+    confirmDelete: (name) => `Excluir o monstro "${name}"?`,
+    deletedMonster: (name) => `"${name}" excluído.`,
+    duplicateInstance: 'Duplicar #',
+    duplicateInstanceTitle: 'Criar outra cópia de combate (ex.: #2) com PV cheios',
+    editMonster: 'Editar',
+    backToStatblock: 'Voltar para Ficha',
+    statblockView: 'Ficha & Rolagens',
+    nameLabel: 'Nome do Monstro',
+    size: 'Tamanho',
+    creatureType: 'Tipo de Criatura',
+    alignment: 'Tendência',
+    portraitUrl: 'URL da Imagem',
+    challengeRating: 'Nível de Desafio (ND)',
+    xp: 'XP',
+    crPrefix: 'ND',
+    acType: 'Tipo de Armadura',
+    hpFormula: 'Fórmula de PV (ex.: 4d8+8)',
+    rollHpFormulaTitle: 'Rolar dados de PV no Dice',
+    initiativeLabel: 'Bônus de Iniciativa',
+    vulnerabilities: 'Vulnerabilidades a Dano',
+    resistances: 'Resistências a Dano',
+    damageImmunities: 'Imunidades a Dano',
+    conditionImmunities: 'Imunidades a Condições',
+    senses: 'Sentidos',
+    languages: 'Idiomas',
+    defensesAndSenses: 'Defesas, Sentidos e Perícias',
+    traits: 'Traços',
+    actions: 'Ações',
+    bonusActions: 'Ações Bônus',
+    reactions: 'Reações',
+    legendaryActions: 'Ações Lendárias',
+    lairActions: 'Ações de Covil',
+    notes: 'Anotações do Mestre',
+    entryNamePh: 'Nome do ataque / traço',
+    entryAtkPh: 'Atq (ex: +4)',
+    entryDcPh: 'CD (ex: 14)',
+    entryDamagePh: 'Dano (ex: 2d6+2)',
+    entryDetailPh: 'Descrição (ex.: +4 para atingir. 8 (2d6 + 2) de dano de concussão.)',
+    addSkill: 'Adicionar Perícia',
+    skillNamePh: 'Percepção',
+    rollAttackBtn: (bonus) => `Atq ${bonus}`,
+    rollDcBtn: (dc) => `CD ${dc} · 1d20`,
+    rollDamageBtn: (notation) => notation,
+    privateNotice: 'Salvo apenas para o Mestre — os jogadores não veem os monstros.',
+    fallbackMonsterName: 'monstro',
+    tokenLinked: (name) => `Token vinculado a ${name} (Mestre).`,
   },
 };
 

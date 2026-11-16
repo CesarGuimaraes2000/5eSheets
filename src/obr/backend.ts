@@ -1,5 +1,10 @@
 import OBR from '@owlbear-rodeo/sdk';
-import { LS_MOCK_PLAYER, LS_MOCK_ROOM, TOKEN_LINK_KEY } from '../constants/keys';
+import {
+  LS_MOCK_PLAYER,
+  LS_MOCK_ROOM,
+  TOKEN_LINK_KEY,
+  TOKEN_MONSTER_LINK_KEY,
+} from '../constants/keys';
 
 export type Metadata = Record<string, unknown>;
 export type Role = 'GM' | 'PLAYER';
@@ -33,6 +38,7 @@ export interface RoomBackend {
   onRoomMetadataChange(cb: (metadata: Metadata) => void): () => void;
   notify(message: string, variant?: 'DEFAULT' | 'ERROR' | 'SUCCESS' | 'WARNING' | 'INFO'): void;
   linkToken(itemId: string, characterId: string | null): Promise<void>;
+  linkMonsterToken(itemId: string, monsterId: string | null): Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -72,8 +78,24 @@ export function createObrBackend(): RoomBackend {
     async linkToken(itemId, characterId) {
       await OBR.scene.items.updateItems([itemId], (items) => {
         for (const item of items) {
-          if (characterId) item.metadata[TOKEN_LINK_KEY] = characterId;
-          else delete item.metadata[TOKEN_LINK_KEY];
+          if (characterId) {
+            item.metadata[TOKEN_LINK_KEY] = characterId;
+            delete item.metadata[TOKEN_MONSTER_LINK_KEY];
+          } else {
+            delete item.metadata[TOKEN_LINK_KEY];
+          }
+        }
+      });
+    },
+    async linkMonsterToken(itemId, monsterId) {
+      await OBR.scene.items.updateItems([itemId], (items) => {
+        for (const item of items) {
+          if (monsterId) {
+            item.metadata[TOKEN_MONSTER_LINK_KEY] = monsterId;
+            delete item.metadata[TOKEN_LINK_KEY];
+          } else {
+            delete item.metadata[TOKEN_MONSTER_LINK_KEY];
+          }
         }
       });
     },
@@ -145,6 +167,9 @@ export function createMockBackend(params: URLSearchParams): RoomBackend {
       console.info(`[OBR notification] ${message}`);
     },
     async linkToken() {
+      /* no tokens in mock mode */
+    },
+    async linkMonsterToken() {
       /* no tokens in mock mode */
     },
   };
