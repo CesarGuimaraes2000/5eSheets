@@ -13,6 +13,7 @@ export interface MonsterEntry {
   atkBonus?: string;
   saveDc?: string;
   damage?: string;
+  cost?: number;
 }
 
 export interface MonsterSheet {
@@ -56,7 +57,12 @@ export interface MonsterSheet {
   actions: MonsterEntry[];
   bonusActions: MonsterEntry[];
   reactions: MonsterEntry[];
+  legendaryResistancesTotal: number;
+  legendaryResistancesUsed: number;
+  legendaryActionsTotal: number;
+  legendaryActionsUsed: number;
   legendaryActions: MonsterEntry[];
+  lairActionsInitiative: number;
   lairActions: MonsterEntry[];
   notes: string;
 }

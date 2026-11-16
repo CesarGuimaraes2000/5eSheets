@@ -27,7 +27,7 @@ import { calculateAbilityModifier, formatModifier } from '../../utils/calculatio
 import { extractDiceNotation } from '../../utils/dice';
 import { analyzeMonsterEntryText } from '../../utils/monsterStorage';
 import { useDiceRoller } from '../shared/DiceRoller';
-import { NumberInput, Panel, cx } from '../shared/ui';
+import { NumberInput, Panel, Pips, cx } from '../shared/ui';
 import { MonsterPortrait } from '../../table/MonsterCard';
 
 type MonsterRecipe = (draft: MonsterSheet) => void;
@@ -86,16 +86,22 @@ function MonsterEntrySection({
   icon,
   entries,
   monsterName,
+  showCost = false,
+  forceVisible = false,
+  headerActions,
 }: {
   title: string;
   icon: ReactNode;
   entries: MonsterEntry[];
   monsterName: string;
+  showCost?: boolean;
+  forceVisible?: boolean;
+  headerActions?: ReactNode;
 }) {
   const { t } = useI18n();
   const { promptRoll, promptDamage } = useDiceRoller();
 
-  if (entries.length === 0) return null;
+  if (!forceVisible && entries.length === 0) return null;
 
   return (
     <Panel
@@ -104,22 +110,33 @@ function MonsterEntrySection({
           {icon} {title}
         </span>
       }
+      actions={headerActions}
       bodyClassName="flex flex-col gap-2 p-2.5"
     >
-      {entries.map((entry) => {
-        const { atkBonus, saveDc, damageNotation } = analyzeMonsterEntryText(entry.detail, entry);
-        const entryLabel = `${monsterName || t.monster.unnamedMonster}: ${entry.name || title}`;
+      {entries.length === 0 ? (
+        <p className="py-1 text-center text-xs text-ink-400">{t.common.noneDash}</p>
+      ) : (
+        entries.map((entry) => {
+          const { atkBonus, saveDc, damageNotation } = analyzeMonsterEntryText(entry.detail, entry);
+          const entryLabel = `${monsterName || t.monster.unnamedMonster}: ${entry.name || title}`;
 
-        return (
-          <div
-            key={entry.id}
-            className="rounded-lg border border-ink-700/60 bg-ink-850/60 p-2.5 transition-colors hover:border-ink-600"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h4 className="font-display text-sm font-bold text-ink-100">
-                {entry.name || title}
-              </h4>
-              <div className="flex flex-wrap items-center gap-1.5">
+          return (
+            <div
+              key={entry.id}
+              className="rounded-lg border border-ink-700/60 bg-ink-850/60 p-2.5 transition-colors hover:border-ink-600"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h4 className="font-display text-sm font-bold text-ink-100">
+                    {entry.name || title}
+                  </h4>
+                  {showCost && (
+                    <span className="chip border-gold-500/40 bg-gold-500/10 text-[10px]! text-gold-300">
+                      {t.monster.actionCostBadge(entry.cost ?? 1)}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
                 {atkBonus !== null && (
                   <button
                     type="button"
@@ -182,8 +199,9 @@ function MonsterEntrySection({
               </p>
             )}
           </div>
-        );
-      })}
+          );
+        })
+      )}
     </Panel>
   );
 }
@@ -400,6 +418,20 @@ export function MonsterDetail({
               <ShieldPlus className="h-3.5 w-3.5" /> {t.table.tempBtn}
             </button>
           </div>
+          {m.legendaryResistancesTotal > 0 && (
+            <div className="mt-3 flex items-center justify-between gap-2 border-t border-ink-700/60 pt-2.5">
+              <span className="field-label text-gold-300!">
+                {t.monster.legendaryResistanceCount(m.legendaryResistancesTotal)}
+              </span>
+              <Pips
+                total={m.legendaryResistancesTotal}
+                filled={m.legendaryResistancesUsed}
+                tone="gold"
+                label={t.monster.legendaryResistanceUsedLabel}
+                onChange={(n) => onUpdate((d) => void (d.legendaryResistancesUsed = n))}
+              />
+            </div>
+          )}
         </Panel>
 
         <Panel title={t.table.conditions}>
@@ -561,12 +593,39 @@ export function MonsterDetail({
         icon={<Flame className="h-3 w-3" />}
         entries={m.legendaryActions}
         monsterName={displayName}
+        showCost
+        forceVisible={m.legendaryActionsTotal > 0}
+        headerActions={
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-semibold text-gold-300 tabular-nums">
+              {Math.max(0, (m.legendaryActionsTotal || 3) - m.legendaryActionsUsed)}/
+              {m.legendaryActionsTotal || 3}
+            </span>
+            <Pips
+              total={m.legendaryActionsTotal || 3}
+              filled={m.legendaryActionsUsed}
+              tone="gold"
+              label={t.monster.legendaryActionsUsedLabel}
+              onChange={(n) =>
+                onUpdate((d) => {
+                  if (d.legendaryActionsTotal === 0) d.legendaryActionsTotal = 3;
+                  d.legendaryActionsUsed = n;
+                })
+              }
+            />
+          </div>
+        }
       />
       <MonsterEntrySection
         title={t.monster.lairActions}
         icon={<Skull className="h-3 w-3" />}
         entries={m.lairActions}
         monsterName={displayName}
+        headerActions={
+          <span className="chip border-arcane-500/50 bg-arcane-500/10 text-arcane-400">
+            {t.monster.lairInitiativeBadge(m.lairActionsInitiative || 20)}
+          </span>
+        }
       />
 
       {m.notes.trim() && (

@@ -360,6 +360,15 @@ export interface Translations {
     privateNotice: string;
     fallbackMonsterName: string;
     tokenLinked: (name: string) => string;
+    legendaryResistance: string;
+    legendaryResistanceCount: (total: number) => string;
+    legendaryResistanceUsedLabel: string;
+    legendaryActionsPerRound: string;
+    legendaryActionsUsedLabel: string;
+    actionCostLabel: string;
+    actionCostBadge: (cost: number) => string;
+    lairInitiativeLabel: string;
+    lairInitiativeBadge: (init: number) => string;
   };
 }
 
@@ -781,6 +790,15 @@ const en: Translations = {
     privateNotice: 'Stored locally for the GM only — players cannot see enemies or room stats.',
     fallbackMonsterName: 'monster',
     tokenLinked: (name) => `Token linked to ${name} (GM).`,
+    legendaryResistance: 'Legendary Resistance (Uses/Day)',
+    legendaryResistanceCount: (total) => `Legendary Resistance (${total}/Day)`,
+    legendaryResistanceUsedLabel: 'Legendary Resistance used',
+    legendaryActionsPerRound: 'Legendary Actions / Round',
+    legendaryActionsUsedLabel: 'Legendary Action used',
+    actionCostLabel: 'Cost',
+    actionCostBadge: (cost) => (cost <= 1 ? '1 Action' : `Costs ${cost} Actions`),
+    lairInitiativeLabel: 'Initiative Count',
+    lairInitiativeBadge: (init) => `Initiative Count ${init} (losing ties)`,
   },
 };
 
@@ -1202,6 +1220,15 @@ const pt: Translations = {
     privateNotice: 'Salvo apenas para o Mestre — os jogadores não veem os monstros.',
     fallbackMonsterName: 'monstro',
     tokenLinked: (name) => `Token vinculado a ${name} (Mestre).`,
+    legendaryResistance: 'Resistência Lendária (Usos/Dia)',
+    legendaryResistanceCount: (total) => `Resistência Lendária (${total}/Dia)`,
+    legendaryResistanceUsedLabel: 'Resistência Lendária usada',
+    legendaryActionsPerRound: 'Ações Lendárias / Rodada',
+    legendaryActionsUsedLabel: 'Ação Lendária usada',
+    actionCostLabel: 'Custo',
+    actionCostBadge: (cost) => (cost <= 1 ? '1 Ação' : `Custa ${cost} Ações`),
+    lairInitiativeLabel: 'Contagem de Iniciativa',
+    lairInitiativeBadge: (init) => `Contagem de Iniciativa ${init} (perdendo empates)`,
   },
 };
 

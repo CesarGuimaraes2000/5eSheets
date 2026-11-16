@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import type { MonsterEntry, MonsterSheet } from '../../types/monster';
 import { ABILITIES } from '../../constants/dnd55Rules';
@@ -5,7 +6,7 @@ import { useI18n } from '../../i18n/I18nContext';
 import { calculateAbilityModifier, formatModifier } from '../../utils/calculations';
 import { createBlankMonsterEntry, proficiencyFromCr } from '../../utils/monsterStorage';
 import { createId } from '../../utils/storage';
-import { Dot, Field, NumberInput, Panel, TextArea, TextInput } from '../shared/ui';
+import { Dot, Field, NumberInput, Panel, Pips, TextArea, TextInput, cx } from '../shared/ui';
 
 type MonsterEntryArrayKey =
   | 'traits'
@@ -18,11 +19,15 @@ type MonsterEntryArrayKey =
 function MonsterEntryEditorSection({
   title,
   entries,
+  showCost = false,
+  headerExtra,
   onAdd,
   onMutate,
 }: {
   title: string;
   entries: MonsterEntry[];
+  showCost?: boolean;
+  headerExtra?: ReactNode;
   onAdd: () => void;
   onMutate: (fn: (list: MonsterEntry[]) => void) => void;
 }) {
@@ -33,9 +38,12 @@ function MonsterEntryEditorSection({
       title={title}
       bodyClassName="p-2.5"
       actions={
-        <button type="button" className="btn-ghost px-2! py-1!" onClick={onAdd}>
-          <Plus className="h-3 w-3" /> {t.common.add}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {headerExtra}
+          <button type="button" className="btn-ghost px-2! py-1!" onClick={onAdd}>
+            <Plus className="h-3 w-3" /> {t.common.add}
+          </button>
+        </div>
       }
     >
       {entries.length === 0 ? (
@@ -47,13 +55,36 @@ function MonsterEntryEditorSection({
               key={entry.id}
               className="flex flex-col gap-1.5 rounded-lg border border-ink-700/70 bg-ink-850/60 p-2"
             >
-              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-[1.6fr_0.6fr_0.6fr_0.9fr_auto]">
+              <div
+                className={cx(
+                  'grid grid-cols-1 gap-1.5',
+                  showCost
+                    ? 'sm:grid-cols-[1.45fr_auto_0.55fr_0.55fr_0.85fr_auto]'
+                    : 'sm:grid-cols-[1.6fr_0.6fr_0.6fr_0.9fr_auto]',
+                )}
+              >
                 <TextInput
                   value={entry.name}
                   placeholder={t.monster.entryNamePh}
                   className="font-semibold"
                   onChange={(v) => onMutate((list) => void (list[idx].name = v))}
                 />
+                {showCost && (
+                  <label
+                    className="flex items-center gap-1 rounded-md border border-ink-700 bg-ink-850 px-1.5 text-[10px] font-semibold text-ink-300"
+                    title={t.monster.actionCostLabel}
+                  >
+                    <span>{t.monster.actionCostLabel}</span>
+                    <NumberInput
+                      bare
+                      value={entry.cost ?? 1}
+                      min={1}
+                      max={9}
+                      className="w-8 text-xs! font-bold text-gold-300!"
+                      onChange={(v) => onMutate((list) => void (list[idx].cost = v))}
+                    />
+                  </label>
+                )}
                 <TextInput
                   value={entry.atkBonus ?? ''}
                   placeholder={t.monster.entryAtkPh}
@@ -271,6 +302,67 @@ export function MonsterEditor({
             />
           </Field>
         </div>
+
+        <div className="mt-3 grid grid-cols-1 gap-2.5 border-t border-ink-700/60 pt-3 sm:grid-cols-3">
+          <div className="flex flex-col gap-1.5">
+            <Field label={t.monster.legendaryResistance}>
+              <NumberInput
+                value={m.legendaryResistancesTotal}
+                min={0}
+                max={10}
+                onChange={(v) =>
+                  mutate((d) => {
+                    d.legendaryResistancesTotal = v;
+                    d.legendaryResistancesUsed = Math.min(d.legendaryResistancesUsed, v);
+                  })
+                }
+              />
+            </Field>
+            {m.legendaryResistancesTotal > 0 && (
+              <Pips
+                total={m.legendaryResistancesTotal}
+                filled={m.legendaryResistancesUsed}
+                tone="gold"
+                label={t.monster.legendaryResistanceUsedLabel}
+                onChange={(n) => mutate((d) => void (d.legendaryResistancesUsed = n))}
+              />
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Field label={t.monster.legendaryActionsPerRound}>
+              <NumberInput
+                value={m.legendaryActionsTotal}
+                min={0}
+                max={10}
+                onChange={(v) =>
+                  mutate((d) => {
+                    d.legendaryActionsTotal = v;
+                    d.legendaryActionsUsed = Math.min(d.legendaryActionsUsed, v);
+                  })
+                }
+              />
+            </Field>
+            {m.legendaryActionsTotal > 0 && (
+              <Pips
+                total={m.legendaryActionsTotal}
+                filled={m.legendaryActionsUsed}
+                tone="gold"
+                label={t.monster.legendaryActionsUsedLabel}
+                onChange={(n) => mutate((d) => void (d.legendaryActionsUsed = n))}
+              />
+            )}
+          </div>
+
+          <Field label={`${t.monster.lairActions} · ${t.monster.lairInitiativeLabel}`}>
+            <NumberInput
+              value={m.lairActionsInitiative}
+              min={0}
+              max={30}
+              onChange={(v) => mutate((d) => void (d.lairActionsInitiative = v))}
+            />
+          </Field>
+        </div>
       </Panel>
 
       {/* Abilities & Saves */}
@@ -405,15 +497,69 @@ export function MonsterEditor({
       </div>
 
       {/* Traits, Actions, Reactions, Legendary, Lair */}
-      {entrySections.map((sec) => (
-        <MonsterEntryEditorSection
-          key={sec.key}
-          title={sec.label}
-          entries={m[sec.key]}
-          onAdd={() => mutate((d) => void d[sec.key].push(createBlankMonsterEntry()))}
-          onMutate={(fn) => mutate((d) => fn(d[sec.key]))}
-        />
-      ))}
+      {entrySections.map((sec) => {
+        const isLegendary = sec.key === 'legendaryActions';
+        const isLair = sec.key === 'lairActions';
+
+        const headerExtra = isLegendary ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="flex items-center gap-1.5 text-[10px] font-semibold text-ink-300">
+              <span>{t.monster.legendaryActionsPerRound}:</span>
+              <NumberInput
+                value={m.legendaryActionsTotal}
+                min={0}
+                max={10}
+                className="h-6 w-12 py-0! text-xs!"
+                onChange={(v) =>
+                  mutate((d) => {
+                    d.legendaryActionsTotal = v;
+                    d.legendaryActionsUsed = Math.min(d.legendaryActionsUsed, v);
+                  })
+                }
+              />
+            </label>
+            {m.legendaryActionsTotal > 0 && (
+              <Pips
+                total={m.legendaryActionsTotal}
+                filled={m.legendaryActionsUsed}
+                tone="gold"
+                label={t.monster.legendaryActionsUsedLabel}
+                onChange={(n) => mutate((d) => void (d.legendaryActionsUsed = n))}
+              />
+            )}
+          </div>
+        ) : isLair ? (
+          <label className="flex items-center gap-1.5 text-[10px] font-semibold text-ink-300">
+            <span>{t.monster.lairInitiativeLabel}:</span>
+            <NumberInput
+              value={m.lairActionsInitiative}
+              min={0}
+              max={30}
+              className="h-6 w-12 py-0! text-xs!"
+              onChange={(v) => mutate((d) => void (d.lairActionsInitiative = v))}
+            />
+          </label>
+        ) : undefined;
+
+        return (
+          <MonsterEntryEditorSection
+            key={sec.key}
+            title={sec.label}
+            entries={m[sec.key]}
+            showCost={isLegendary}
+            headerExtra={headerExtra}
+            onAdd={() =>
+              mutate((d) => {
+                if (isLegendary && d.legendaryActionsTotal === 0) {
+                  d.legendaryActionsTotal = 3;
+                }
+                d[sec.key].push(createBlankMonsterEntry());
+              })
+            }
+            onMutate={(fn) => mutate((d) => fn(d[sec.key]))}
+          />
+        );
+      })}
 
       {/* Notes */}
       <Panel title={t.monster.notes}>

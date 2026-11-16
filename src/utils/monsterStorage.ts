@@ -263,6 +263,17 @@ export function analyzeMonsterEntryText(
   return { atkBonus, saveDc, damageNotation };
 }
 
+function extractEntryCost(name: string, detail: string, explicitCost?: unknown): number {
+  if (typeof explicitCost === 'number' && Number.isFinite(explicitCost) && explicitCost >= 1) {
+    return Math.min(9, Math.trunc(explicitCost));
+  }
+  const match = `${name}\n${detail}`.match(/(?:custa|costs?)\s*(\d+)\s*(?:a[çc][õo]es|actions?)/i);
+  if (match) {
+    return Math.min(9, Math.max(1, Number.parseInt(match[1], 10)));
+  }
+  return 1;
+}
+
 export const createBlankMonsterEntry = (
   init?: Partial<Omit<MonsterEntry, 'id'>>,
 ): MonsterEntry => ({
@@ -272,6 +283,7 @@ export const createBlankMonsterEntry = (
   atkBonus: init?.atkBonus ?? '',
   saveDc: init?.saveDc ?? '',
   damage: init?.damage ?? '',
+  cost: init?.cost ?? 1,
 });
 
 export function createBlankMonster(lang: Lang = 'en'): MonsterSheet {
@@ -309,7 +321,12 @@ export function createBlankMonster(lang: Lang = 'en'): MonsterSheet {
     actions: [],
     bonusActions: [],
     reactions: [],
+    legendaryResistancesTotal: 0,
+    legendaryResistancesUsed: 0,
+    legendaryActionsTotal: 0,
+    legendaryActionsUsed: 0,
     legendaryActions: [],
+    lairActionsInitiative: 20,
     lairActions: [],
     notes: '',
   };
@@ -328,6 +345,7 @@ function normalizeEntries(raw: unknown): MonsterEntry[] {
           atkBonus: analyzed.atkBonus !== null ? String(analyzed.atkBonus) : '',
           saveDc: analyzed.saveDc !== null ? String(analyzed.saveDc) : '',
           damage: analyzed.damageNotation ?? '',
+          cost: extractEntryCost('', item.trim()),
         }),
       );
       continue;
@@ -346,6 +364,7 @@ function normalizeEntries(raw: unknown): MonsterEntry[] {
       atkBonus,
       saveDc,
       damage,
+      cost: extractEntryCost(name, detail, item.cost),
     });
   }
   return out;
@@ -384,6 +403,23 @@ export function normalizeMonster(raw: unknown): MonsterSheet {
   const hpMax = Math.max(0, toNumber(s.hpMax, blank.hpMax));
   const hpCurrent = Math.max(0, toNumber(s.hpCurrent, hpMax));
   const cr = toStr(s.challengeRating, blank.challengeRating);
+  const legendaryResistancesTotal = Math.min(
+    10,
+    Math.max(0, toNumber(s.legendaryResistancesTotal, 0)),
+  );
+  const legendaryResistancesUsed = Math.min(
+    legendaryResistancesTotal,
+    Math.max(0, toNumber(s.legendaryResistancesUsed, 0)),
+  );
+  const legendaryActionsTotal = Math.min(
+    10,
+    Math.max(0, toNumber(s.legendaryActionsTotal, 0)),
+  );
+  const legendaryActionsUsed = Math.min(
+    legendaryActionsTotal,
+    Math.max(0, toNumber(s.legendaryActionsUsed, 0)),
+  );
+  const lairActionsInitiative = Math.max(0, toNumber(s.lairActionsInitiative, 20));
 
   return {
     schemaVersion: 1,
@@ -427,7 +463,12 @@ export function normalizeMonster(raw: unknown): MonsterSheet {
     actions: normalizeEntries(s.actions),
     bonusActions: normalizeEntries(s.bonusActions),
     reactions: normalizeEntries(s.reactions),
+    legendaryResistancesTotal,
+    legendaryResistancesUsed,
+    legendaryActionsTotal,
+    legendaryActionsUsed,
     legendaryActions: normalizeEntries(s.legendaryActions),
+    lairActionsInitiative,
     lairActions: normalizeEntries(s.lairActions),
     notes: toStr(s.notes),
   };
@@ -479,6 +520,7 @@ function mapBlueprintEntries(raw: unknown): MonsterEntry[] {
           atkBonus: analyzed.atkBonus !== null ? String(analyzed.atkBonus) : '',
           saveDc: analyzed.saveDc !== null ? String(analyzed.saveDc) : '',
           damage: analyzed.damageNotation ?? '',
+          cost: extractEntryCost('', item.trim()),
         }),
       );
       continue;
@@ -495,6 +537,7 @@ function mapBlueprintEntries(raw: unknown): MonsterEntry[] {
         atkBonus: analyzed.atkBonus !== null ? String(analyzed.atkBonus) : '',
         saveDc: analyzed.saveDc !== null ? String(analyzed.saveDc) : '',
         damage: analyzed.damageNotation ?? '',
+        cost: extractEntryCost(name, detail, item.cost),
       }),
     );
   }
@@ -607,6 +650,24 @@ export function fromGiffyglyphBlueprint(raw: Json, lang: Lang = 'pt'): MonsterSh
     notes = bp.notes;
   }
 
+  const traits = mapBlueprintEntries(bp.traits);
+  const legendaryActions = mapBlueprintEntries(bp.legendaryActions);
+  const bpLegPerRound = toNumber(bp.legendaryActionsPerRound, 0);
+  const legendaryActionsTotal = bpLegPerRound > 0 ? bpLegPerRound : legendaryActions.length > 0 ? 3 : 0;
+  const bpLairInit = toNumber(bp.lairActionsInitiative, 0);
+  const lairActionsInitiative = bpLairInit > 0 ? bpLairInit : 20;
+
+  let legendaryResistancesTotal = 0;
+  for (const tr of traits) {
+    const m = `${tr.name} ${tr.detail}`.match(
+      /(?:resist[êe]ncia\s+lend[áa]ria|legendary\s+resistance)\s*\(\s*(\d+)\s*\/\s*(?:dia|day)/i,
+    );
+    if (m) {
+      legendaryResistancesTotal = Math.min(10, Math.max(0, Number.parseInt(m[1], 10)));
+      break;
+    }
+  }
+
   return normalizeMonster({
     schemaVersion: 1,
     id: createId(),
@@ -637,11 +698,16 @@ export function fromGiffyglyphBlueprint(raw: Json, lang: Lang = 'pt'): MonsterSh
     senses: senseParts.join(', '),
     languages: extractBlueprintTypedList(bp.languages, LANGUAGE_PT, lang),
     conditions: [],
-    traits: mapBlueprintEntries(bp.traits),
+    traits,
     actions: mapBlueprintEntries(bp.actions),
     bonusActions: mapBlueprintEntries(bp.bonusActions),
     reactions: mapBlueprintEntries(bp.reactions),
-    legendaryActions: mapBlueprintEntries(bp.legendaryActions),
+    legendaryResistancesTotal,
+    legendaryResistancesUsed: 0,
+    legendaryActionsTotal,
+    legendaryActionsUsed: 0,
+    legendaryActions,
+    lairActionsInitiative,
     lairActions: mapBlueprintEntries(bp.lairActions),
     notes,
   });
@@ -706,6 +772,8 @@ export function duplicateMonster(
     hpCurrent: copy.hpMax,
     hpTemp: 0,
     conditions: [],
+    legendaryResistancesUsed: 0,
+    legendaryActionsUsed: 0,
   };
 }
 
